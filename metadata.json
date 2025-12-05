@@ -1,0 +1,5 @@
+{
+  "name": "SecGuard Manager",
+  "description": "A comprehensive role-based security device management system featuring System Administration, Security Policy enforcement, and Audit Logging.",
+  "requestFramePermissions": []
+}
