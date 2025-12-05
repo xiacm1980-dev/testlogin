@@ -10,8 +10,11 @@ export enum View {
   USER_MANAGEMENT = 'user_management',
   SECURITY_POLICIES = 'security_policies',
   THREAT_PROTECTION = 'threat_protection',
+  VIDEO_CLEANING = 'video_cleaning',
+  FILE_CLEANING = 'file_cleaning',
+  API_SETTINGS = 'api_settings',
   LOGS_AUDIT = 'logs_audit',
-  LOGS_TRAFFIC = 'logs_traffic',
+  REPORTS = 'reports',
 }
 
 export interface User {

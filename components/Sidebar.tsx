@@ -8,7 +8,10 @@ import {
   FileText, 
   BarChart3, 
   LogOut, 
-  Network
+  Video,
+  FileScan,
+  Globe,
+  Zap
 } from 'lucide-react';
 import { Role, View } from '../types';
 
@@ -23,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
   
   const getMenuItems = () => {
     const common = [
-      { id: View.DASHBOARD, label: 'Overview', icon: LayoutDashboard },
+      { id: View.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
     ];
 
     switch (role) {
@@ -31,19 +34,22 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
         return [
           ...common,
           { id: View.SYSTEM_CONFIG, label: 'System Config', icon: Settings },
+          { id: View.API_SETTINGS, label: 'API Settings', icon: Globe },
           { id: View.USER_MANAGEMENT, label: 'User Management', icon: Users },
         ];
       case Role.SECADMIN:
         return [
           ...common,
           { id: View.SECURITY_POLICIES, label: 'Security Policies', icon: ShieldCheck },
-          { id: View.THREAT_PROTECTION, label: 'Threat Protection', icon: Network },
+          { id: View.THREAT_PROTECTION, label: 'Threat & DDoS', icon: Zap },
+          { id: View.VIDEO_CLEANING, label: 'Video Cleaning', icon: Video },
+          { id: View.FILE_CLEANING, label: 'File Cleaning', icon: FileScan },
         ];
       case Role.LOGADMIN:
         return [
           ...common,
           { id: View.LOGS_AUDIT, label: 'Audit Logs', icon: FileText },
-          { id: View.LOGS_TRAFFIC, label: 'Traffic Analysis', icon: BarChart3 },
+          { id: View.REPORTS, label: 'Reports & Analysis', icon: BarChart3 },
         ];
       default:
         return common;
@@ -59,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
         <span className="text-xl font-bold tracking-tight">SecGuard</span>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 flex-1 overflow-y-auto scrollbar-hide">
         <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">
           {role.toUpperCase()} Console
         </div>
@@ -85,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
         </nav>
       </div>
 
-      <div className="mt-auto p-4 border-t border-slate-800 bg-slate-950">
+      <div className="p-4 border-t border-slate-800 bg-slate-950">
         <button
           onClick={onLogout}
           className="w-full flex items-center px-4 py-2 text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"

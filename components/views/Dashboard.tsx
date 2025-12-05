@@ -1,175 +1,193 @@
 import React from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
-} from 'recharts';
 import { Role } from '../../types';
-import { Activity, ShieldAlert, Wifi, HardDrive } from 'lucide-react';
+import { 
+  Cpu, HardDrive, Activity, Server, Zap, Video, FileScan, CheckCircle2, AlertTriangle, XCircle 
+} from 'lucide-react';
 
 interface DashboardProps {
   role: Role;
 }
 
-const TRAFFIC_DATA = [
-  { name: '00:00', mbps: 40 },
-  { name: '04:00', mbps: 30 },
-  { name: '08:00', mbps: 200 },
-  { name: '12:00', mbps: 278 },
-  { name: '16:00', mbps: 189 },
-  { name: '20:00', mbps: 239 },
-  { name: '23:59', mbps: 80 },
-];
-
-const THREAT_DATA = [
-  { name: 'Malware', value: 400 },
-  { name: 'Phishing', value: 300 },
-  { name: 'DDoS', value: 300 },
-  { name: 'Botnet', value: 200 },
-];
-
-const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
-
 const Dashboard: React.FC<DashboardProps> = ({ role }) => {
   return (
     <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-slate-900">System Dashboard</h2>
+      
+      {/* Row 1: Hardware Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Widget 1 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-start">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">System Status</p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">Healthy</h3>
+              <p className="text-sm font-medium text-slate-500">CPU Usage</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">32%</h3>
+            </div>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Cpu className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2">
+            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '32%' }}></div>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">16 Cores Active</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Memory Usage</p>
+              <h3 className="text-2xl font-bold text-emerald-600 mt-1">12.4 GB</h3>
             </div>
             <div className="p-2 bg-emerald-100 rounded-lg">
               <Activity className="w-6 h-6 text-emerald-600" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-slate-500">
-            Uptime: <span className="font-medium text-slate-900">45d 12h 30m</span>
+          <div className="w-full bg-slate-100 rounded-full h-2">
+            <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '45%' }}></div>
           </div>
+          <p className="text-xs text-slate-500 mt-2">Total: 32 GB</p>
         </div>
 
-        {/* Widget 2 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-start">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">Active Threats</p>
-              <h3 className="text-2xl font-bold text-red-600 mt-1">12</h3>
-            </div>
-            <div className="p-2 bg-red-100 rounded-lg">
-              <ShieldAlert className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-slate-500">
-            Blocked today: <span className="font-medium text-slate-900">1,240</span>
-          </div>
-        </div>
-
-        {/* Widget 3 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Network Load</p>
-              <h3 className="text-2xl font-bold text-blue-600 mt-1">450 Mbps</h3>
-            </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Wifi className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-slate-500">
-            Peak: <span className="font-medium text-slate-900">1.2 Gbps</span>
-          </div>
-        </div>
-
-        {/* Widget 4 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Disk Usage</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-1">72%</h3>
+              <p className="text-sm font-medium text-slate-500">Disk Status</p>
+              <h3 className="text-2xl font-bold text-amber-600 mt-1">68%</h3>
             </div>
             <div className="p-2 bg-amber-100 rounded-lg">
               <HardDrive className="w-6 h-6 text-amber-600" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-slate-500">
-            Storage: <span className="font-medium text-slate-900">1.8TB / 2.5TB</span>
+          <div className="w-full bg-slate-100 rounded-full h-2">
+            <div className="bg-amber-600 h-2 rounded-full" style={{ width: '68%' }}></div>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Healthy (RAID 5)</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-sm font-medium text-slate-500">System Uptime</p>
+              <h3 className="text-2xl font-bold text-indigo-600 mt-1">45d 12h</h3>
+            </div>
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Server className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+             <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-xs font-medium text-green-600">All Systems Normal</span>
           </div>
         </div>
       </div>
 
+      {/* Row 2: Service & Task Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Chart 1: Traffic - Most relevant for SysAdmin and LogAdmin */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Traffic Throughput (24h)</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={TRAFFIC_DATA}>
-                <defs>
-                  <linearGradient id="colorMbps" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} 
-                />
-                <Area type="monotone" dataKey="mbps" stroke="#3b82f6" fillOpacity={1} fill="url(#colorMbps)" />
-              </AreaChart>
-            </ResponsiveContainer>
+        
+        {/* Service Status */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-5 border-b border-slate-100">
+            <h3 className="font-semibold text-lg text-slate-800">Service Status</h3>
+          </div>
+          <div className="p-0">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
+                <tr>
+                  <th className="px-6 py-3">Service Name</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Load</th>
+                  <th className="px-6 py-3">Last Check</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="px-6 py-4 font-medium">Core Firewall Engine</td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4">Low</td>
+                  <td className="px-6 py-4 text-slate-500">Just now</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-medium">Video Analysis Daemon</td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4 text-amber-600 font-medium">High</td>
+                  <td className="px-6 py-4 text-slate-500">1 min ago</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-medium">File Scanning SandBox</td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4">Medium</td>
+                  <td className="px-6 py-4 text-slate-500">Just now</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-medium">Log Aggregator</td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-bold"><AlertTriangle className="w-3 h-3 mr-1"/> Degraded</span></td>
+                  <td className="px-6 py-4">High</td>
+                  <td className="px-6 py-4 text-slate-500">5 mins ago</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Chart 2: Threat Mix - Most relevant for SecAdmin */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Threat Distribution</h3>
-          <div className="h-64 flex items-center justify-center">
-             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={THREAT_DATA}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {THREAT_DATA.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                   contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-4 text-sm">
-            {THREAT_DATA.map((item, idx) => (
-               <div key={item.name} className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS[idx % COLORS.length]}}></div>
-                 <span className="text-slate-600">{item.name}</span>
+        {/* Task Statistics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
+             <Video className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
+             <h3 className="text-lg font-medium opacity-90 mb-2">Active Video Tasks</h3>
+             <div className="text-4xl font-bold mb-4">12</div>
+             <div className="flex flex-col space-y-2 text-sm opacity-80">
+               <div className="flex justify-between">
+                 <span>Ingress Streams:</span>
+                 <span className="font-bold">12</span>
                </div>
-            ))}
+               <div className="flex justify-between">
+                 <span>Cleaned/Forwarded:</span>
+                 <span className="font-bold">12</span>
+               </div>
+             </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
+             <FileScan className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
+             <h3 className="text-lg font-medium opacity-90 mb-2">File Cleaning Tasks</h3>
+             <div className="text-4xl font-bold mb-4">1,402</div>
+             <div className="flex flex-col space-y-2 text-sm opacity-80">
+               <div className="flex justify-between">
+                 <span>Pending:</span>
+                 <span className="font-bold">45</span>
+               </div>
+               <div className="flex justify-between">
+                 <span>Malware Found:</span>
+                 <span className="font-bold text-red-100">3</span>
+               </div>
+             </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 col-span-1 sm:col-span-2">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-5 h-5 text-orange-500" />
+              <h3 className="font-semibold text-slate-800">Threat Prevention Stats (24h)</h3>
+            </div>
+            <div className="flex justify-around text-center">
+              <div>
+                <div className="text-2xl font-bold text-slate-900">842</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">DDoS Attacks</div>
+              </div>
+              <div className="w-px bg-slate-200"></div>
+              <div>
+                <div className="text-2xl font-bold text-slate-900">15</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">Intrusions</div>
+              </div>
+              <div className="w-px bg-slate-200"></div>
+              <div>
+                <div className="text-2xl font-bold text-slate-900">100%</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">Uptime</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Role specific quick action or message */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
-        <h4 className="font-semibold text-indigo-900 mb-2">
-           Welcome back, {role === Role.SYSADMIN ? 'System Administrator' : role === Role.SECADMIN ? 'Security Administrator' : 'Log Administrator'}
-        </h4>
-        <p className="text-indigo-700 text-sm">
-          {role === Role.SYSADMIN && "System patches are available. Please schedule a maintenance window."}
-          {role === Role.SECADMIN && "New high-risk vulnerability signatures were automatically applied at 03:00 AM."}
-          {role === Role.LOGADMIN && "Log storage capacity is at 72%. Retention policy will auto-archive logs older than 90 days."}
-        </p>
       </div>
     </div>
   );
