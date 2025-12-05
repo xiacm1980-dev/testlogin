@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { Video, ArrowRight, Settings, Shield, Globe, Play } from 'lucide-react';
+import { useLanguage } from '../../i18n';
 
 const VideoStream: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'access' | 'forward' | 'strategy'>('access');
+  const { t } = useLanguage();
 
   const renderAccessConfig = () => (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
        <div className="flex items-start justify-between">
          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Ingress Configuration</h3>
-            <p className="text-slate-500 text-sm">Configure accepted incoming video streams and protocols.</p>
+            <h3 className="text-lg font-semibold text-slate-800">{t('video.ingress')}</h3>
+            <p className="text-slate-500 text-sm">{t('video.ingress_desc')}</p>
          </div>
          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Globe className="w-5 h-5"/></div>
        </div>
        
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-             <label className="text-sm font-medium text-slate-700">Input Protocol</label>
+             <label className="text-sm font-medium text-slate-700">{t('video.protocol')}</label>
              <select className="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
                 <option>RTSP (Real Time Streaming Protocol)</option>
                 <option>RTMP (Real-Time Messaging Protocol)</option>
@@ -24,16 +26,16 @@ const VideoStream: React.FC = () => {
              </select>
           </div>
           <div className="space-y-2">
-             <label className="text-sm font-medium text-slate-700">Listening Port</label>
+             <label className="text-sm font-medium text-slate-700">{t('video.port')}</label>
              <input type="number" defaultValue={554} className="w-full border border-slate-300 rounded-lg p-2.5" />
           </div>
           <div className="col-span-2 space-y-2">
-             <label className="text-sm font-medium text-slate-700">Allowed Source IPs (CIDR)</label>
+             <label className="text-sm font-medium text-slate-700">{t('video.allowed_ips')}</label>
              <textarea className="w-full border border-slate-300 rounded-lg p-2.5 h-24 font-mono text-sm" defaultValue="192.168.10.0/24&#10;10.5.0.0/16"></textarea>
           </div>
        </div>
        <div className="flex justify-end">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Save Ingress Rules</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{t('video.save_ingress')}</button>
        </div>
     </div>
   );
@@ -42,8 +44,8 @@ const VideoStream: React.FC = () => {
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
        <div className="flex items-start justify-between">
          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Forwarding Configuration</h3>
-            <p className="text-slate-500 text-sm">Define where cleaned streams should be sent.</p>
+            <h3 className="text-lg font-semibold text-slate-800">{t('video.forward')}</h3>
+            <p className="text-slate-500 text-sm">{t('video.forward_desc')}</p>
          </div>
          <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><ArrowRight className="w-5 h-5"/></div>
        </div>
@@ -88,8 +90,8 @@ const VideoStream: React.FC = () => {
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
        <div className="flex items-start justify-between">
          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Cleaning Strategy</h3>
-            <p className="text-slate-500 text-sm">Deep packet inspection and payload sanitization rules.</p>
+            <h3 className="text-lg font-semibold text-slate-800">{t('video.strategy')}</h3>
+            <p className="text-slate-500 text-sm">{t('video.strategy_desc')}</p>
          </div>
          <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><Shield className="w-5 h-5"/></div>
        </div>
@@ -97,7 +99,7 @@ const VideoStream: React.FC = () => {
        <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-blue-300 transition-colors">
              <div>
-                <h4 className="font-medium text-slate-900">Protocol Compliance Check</h4>
+                <h4 className="font-medium text-slate-900">{t('video.check.protocol')}</h4>
                 <p className="text-sm text-slate-500">Strictly enforce RFC standards for RTSP/RTMP headers.</p>
              </div>
              <input type="checkbox" defaultChecked className="w-5 h-5 accent-blue-600" />
@@ -105,7 +107,7 @@ const VideoStream: React.FC = () => {
 
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-blue-300 transition-colors">
              <div>
-                <h4 className="font-medium text-slate-900">Steganography Detection</h4>
+                <h4 className="font-medium text-slate-900">{t('video.check.steganography')}</h4>
                 <p className="text-sm text-slate-500">Analyze frames for hidden data payloads.</p>
              </div>
              <input type="checkbox" defaultChecked className="w-5 h-5 accent-blue-600" />
@@ -113,7 +115,7 @@ const VideoStream: React.FC = () => {
 
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-blue-300 transition-colors">
              <div>
-                <h4 className="font-medium text-slate-900">Frame Rate Limiting</h4>
+                <h4 className="font-medium text-slate-900">{t('video.check.framerate')}</h4>
                 <p className="text-sm text-slate-500">Normalize frame rates to prevent buffer overflow attacks.</p>
              </div>
              <input type="checkbox" className="w-5 h-5 accent-blue-600" />
@@ -126,11 +128,11 @@ const VideoStream: React.FC = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
        <div className="flex items-center justify-between">
          <div>
-           <h2 className="text-2xl font-bold text-slate-900">Video Stream Cleaning</h2>
-           <p className="text-slate-500">Secure low-latency video transfer and sanitization.</p>
+           <h2 className="text-2xl font-bold text-slate-900">{t('video.title')}</h2>
+           <p className="text-slate-500">{t('video.subtitle')}</p>
          </div>
          <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors">
-            <Play className="w-4 h-4 fill-current" /> Restart Engine
+            <Play className="w-4 h-4 fill-current" /> {t('video.restart')}
          </button>
        </div>
 
@@ -139,19 +141,19 @@ const VideoStream: React.FC = () => {
           onClick={() => setActiveTab('access')}
           className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${activeTab === 'access' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
         >
-          Access Config
+          {t('video.tab.access')}
         </button>
         <button
           onClick={() => setActiveTab('forward')}
           className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${activeTab === 'forward' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
         >
-          Forward Config
+          {t('video.tab.forward')}
         </button>
         <button
           onClick={() => setActiveTab('strategy')}
           className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${activeTab === 'strategy' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
         >
-          Cleaning Strategy
+          {t('video.tab.strategy')}
         </button>
       </div>
 

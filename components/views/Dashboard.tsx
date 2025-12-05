@@ -3,22 +3,25 @@ import { Role } from '../../types';
 import { 
   Cpu, HardDrive, Activity, Server, Zap, Video, FileScan, CheckCircle2, AlertTriangle, XCircle 
 } from 'lucide-react';
+import { useLanguage } from '../../i18n';
 
 interface DashboardProps {
   role: Role;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ role }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">System Dashboard</h2>
+      <h2 className="text-2xl font-bold text-slate-900">{t('dash.system_dashboard')}</h2>
       
       {/* Row 1: Hardware Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">CPU Usage</p>
+              <p className="text-sm font-medium text-slate-500">{t('dash.cpu')}</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-1">32%</h3>
             </div>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -34,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">Memory Usage</p>
+              <p className="text-sm font-medium text-slate-500">{t('dash.memory')}</p>
               <h3 className="text-2xl font-bold text-emerald-600 mt-1">12.4 GB</h3>
             </div>
             <div className="p-2 bg-emerald-100 rounded-lg">
@@ -50,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">Disk Status</p>
+              <p className="text-sm font-medium text-slate-500">{t('dash.disk')}</p>
               <h3 className="text-2xl font-bold text-amber-600 mt-1">68%</h3>
             </div>
             <div className="p-2 bg-amber-100 rounded-lg">
@@ -66,7 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">System Uptime</p>
+              <p className="text-sm font-medium text-slate-500">{t('dash.uptime')}</p>
               <h3 className="text-2xl font-bold text-indigo-600 mt-1">45d 12h</h3>
             </div>
             <div className="p-2 bg-indigo-100 rounded-lg">
@@ -78,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-xs font-medium text-green-600">All Systems Normal</span>
+              <span className="text-xs font-medium text-green-600">{t('dash.healthy')}</span>
           </div>
         </div>
       </div>
@@ -89,40 +92,40 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
         {/* Service Status */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-5 border-b border-slate-100">
-            <h3 className="font-semibold text-lg text-slate-800">Service Status</h3>
+            <h3 className="font-semibold text-lg text-slate-800">{t('dash.service_status')}</h3>
           </div>
           <div className="p-0">
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-3">Service Name</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Load</th>
-                  <th className="px-6 py-3">Last Check</th>
+                  <th className="px-6 py-3">{t('dash.service_name')}</th>
+                  <th className="px-6 py-3">{t('dash.status')}</th>
+                  <th className="px-6 py-3">{t('dash.load')}</th>
+                  <th className="px-6 py-3">{t('dash.last_check')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 <tr>
                   <td className="px-6 py-4 font-medium">Core Firewall Engine</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
                   <td className="px-6 py-4">Low</td>
                   <td className="px-6 py-4 text-slate-500">Just now</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-medium">Video Analysis Daemon</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
                   <td className="px-6 py-4 text-amber-600 font-medium">High</td>
                   <td className="px-6 py-4 text-slate-500">1 min ago</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-medium">File Scanning SandBox</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> Running</span></td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
                   <td className="px-6 py-4">Medium</td>
                   <td className="px-6 py-4 text-slate-500">Just now</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-medium">Log Aggregator</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-bold"><AlertTriangle className="w-3 h-3 mr-1"/> Degraded</span></td>
+                  <td className="px-6 py-4"><span className="inline-flex items-center text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-bold"><AlertTriangle className="w-3 h-3 mr-1"/> {t('dash.degraded')}</span></td>
                   <td className="px-6 py-4">High</td>
                   <td className="px-6 py-4 text-slate-500">5 mins ago</td>
                 </tr>
@@ -135,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
              <Video className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
-             <h3 className="text-lg font-medium opacity-90 mb-2">Active Video Tasks</h3>
+             <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_video')}</h3>
              <div className="text-4xl font-bold mb-4">12</div>
              <div className="flex flex-col space-y-2 text-sm opacity-80">
                <div className="flex justify-between">
@@ -151,7 +154,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
 
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
              <FileScan className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
-             <h3 className="text-lg font-medium opacity-90 mb-2">File Cleaning Tasks</h3>
+             <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_file')}</h3>
              <div className="text-4xl font-bold mb-4">1,402</div>
              <div className="flex flex-col space-y-2 text-sm opacity-80">
                <div className="flex justify-between">
@@ -168,22 +171,22 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 col-span-1 sm:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-orange-500" />
-              <h3 className="font-semibold text-slate-800">Threat Prevention Stats (24h)</h3>
+              <h3 className="font-semibold text-slate-800">{t('dash.threat_stats')}</h3>
             </div>
             <div className="flex justify-around text-center">
               <div>
                 <div className="text-2xl font-bold text-slate-900">842</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">DDoS Attacks</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.ddos_attacks')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>
               <div>
                 <div className="text-2xl font-bold text-slate-900">15</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">Intrusions</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.intrusions')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>
               <div>
                 <div className="text-2xl font-bold text-slate-900">100%</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">Uptime</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.uptime')}</div>
               </div>
             </div>
           </div>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Download, AlertTriangle, Info, XCircle, CheckCircle } from 'lucide-react';
+import { Search, Download, AlertTriangle, Info, XCircle } from 'lucide-react';
 import { MOCK_LOGS } from '../../constants';
-import { LogEntry } from '../../types';
+import { useLanguage } from '../../i18n';
 
 const LogAudit: React.FC = () => {
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const { t } = useLanguage();
 
   const getSeverityIcon = (severity: string) => {
     switch(severity) {
@@ -38,12 +39,12 @@ const LogAudit: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h2 className="text-2xl font-bold text-slate-900">System Logs & Audit</h2>
-           <p className="text-slate-500">Monitor system events, security alerts, and user activity.</p>
+           <h2 className="text-2xl font-bold text-slate-900">{t('log.title')}</h2>
+           <p className="text-slate-500">{t('log.subtitle')}</p>
         </div>
         <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium transition-all">
           <Download className="w-4 h-4" />
-          Export CSV
+          {t('log.export')}
         </button>
       </div>
 
@@ -53,7 +54,7 @@ const LogAudit: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search by message, module, IP..." 
+              placeholder={t('log.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -80,11 +81,11 @@ const LogAudit: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
                <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <th className="px-6 py-3 font-semibold">Time</th>
-                <th className="px-6 py-3 font-semibold">Severity</th>
-                <th className="px-6 py-3 font-semibold">Module</th>
-                <th className="px-6 py-3 font-semibold">Message</th>
-                <th className="px-6 py-3 font-semibold">Source</th>
+                <th className="px-6 py-3 font-semibold">{t('log.col.time')}</th>
+                <th className="px-6 py-3 font-semibold">{t('log.col.severity')}</th>
+                <th className="px-6 py-3 font-semibold">{t('log.col.module')}</th>
+                <th className="px-6 py-3 font-semibold">{t('log.col.message')}</th>
+                <th className="px-6 py-3 font-semibold">{t('log.col.source')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -107,7 +108,7 @@ const LogAudit: React.FC = () => {
             </tbody>
           </table>
           {filteredLogs.length === 0 && (
-            <div className="p-8 text-center text-slate-400">No logs found.</div>
+            <div className="p-8 text-center text-slate-400">{t('log.empty')}</div>
           )}
         </div>
       </div>

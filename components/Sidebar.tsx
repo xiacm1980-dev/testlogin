@@ -14,6 +14,7 @@ import {
   Zap
 } from 'lucide-react';
 import { Role, View } from '../types';
+import { useLanguage } from '../i18n';
 
 interface SidebarProps {
   role: Role;
@@ -23,33 +24,34 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLogout }) => {
+  const { t } = useLanguage();
   
   const getMenuItems = () => {
     const common = [
-      { id: View.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+      { id: View.DASHBOARD, label: t('menu.dashboard'), icon: LayoutDashboard },
     ];
 
     switch (role) {
       case Role.SYSADMIN:
         return [
           ...common,
-          { id: View.SYSTEM_CONFIG, label: 'System Config', icon: Settings },
-          { id: View.API_SETTINGS, label: 'API Settings', icon: Globe },
-          { id: View.USER_MANAGEMENT, label: 'User Management', icon: Users },
+          { id: View.SYSTEM_CONFIG, label: t('menu.system_config'), icon: Settings },
+          { id: View.API_SETTINGS, label: t('menu.api_settings'), icon: Globe },
+          { id: View.USER_MANAGEMENT, label: t('menu.user_management'), icon: Users },
         ];
       case Role.SECADMIN:
         return [
           ...common,
-          { id: View.SECURITY_POLICIES, label: 'Security Policies', icon: ShieldCheck },
-          { id: View.THREAT_PROTECTION, label: 'Threat & DDoS', icon: Zap },
-          { id: View.VIDEO_CLEANING, label: 'Video Cleaning', icon: Video },
-          { id: View.FILE_CLEANING, label: 'File Cleaning', icon: FileScan },
+          { id: View.SECURITY_POLICIES, label: t('menu.security_policies'), icon: ShieldCheck },
+          { id: View.THREAT_PROTECTION, label: t('menu.threat_protection'), icon: Zap },
+          { id: View.VIDEO_CLEANING, label: t('menu.video_cleaning'), icon: Video },
+          { id: View.FILE_CLEANING, label: t('menu.file_cleaning'), icon: FileScan },
         ];
       case Role.LOGADMIN:
         return [
           ...common,
-          { id: View.LOGS_AUDIT, label: 'Audit Logs', icon: FileText },
-          { id: View.REPORTS, label: 'Reports & Analysis', icon: BarChart3 },
+          { id: View.LOGS_AUDIT, label: t('menu.logs_audit'), icon: FileText },
+          { id: View.REPORTS, label: t('menu.reports'), icon: BarChart3 },
         ];
       default:
         return common;
@@ -67,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
 
       <div className="p-4 flex-1 overflow-y-auto scrollbar-hide">
         <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">
-          {role.toUpperCase()} Console
+          {t(`role.${role}`)} Console
         </div>
         <nav className="space-y-1">
           {menuItems.map((item) => {
@@ -97,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
           className="w-full flex items-center px-4 py-2 text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
         >
           <LogOut className="w-5 h-5 mr-3" />
-          Sign Out
+          {t('menu.signout')}
         </button>
       </div>
     </div>

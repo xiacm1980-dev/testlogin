@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UploadCloud, File, CheckCircle, XCircle, Clock, Search } from 'lucide-react';
+import { useLanguage } from '../../i18n';
 
 const FileCleaning: React.FC = () => {
   const [tasks, setTasks] = useState([
@@ -7,12 +8,13 @@ const FileCleaning: React.FC = () => {
     { id: 'T-10294', name: 'suspicious_installer.exe', size: '15.1 MB', status: 'MALICIOUS', time: '10:45 AM' },
     { id: 'T-10295', name: 'site_backup.zip', size: '142 MB', status: 'SCANNING', time: '10:48 AM' },
   ]);
+  const { t } = useLanguage();
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'CLEAN': return <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded text-xs font-bold"><CheckCircle className="w-3 h-3"/> Clean</span>;
-      case 'MALICIOUS': return <span className="inline-flex items-center gap-1 text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded text-xs font-bold"><XCircle className="w-3 h-3"/> Malicious</span>;
-      case 'SCANNING': return <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><Clock className="w-3 h-3 animate-spin"/> Scanning...</span>;
+      case 'CLEAN': return <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded text-xs font-bold"><CheckCircle className="w-3 h-3"/> {t('file.status.clean')}</span>;
+      case 'MALICIOUS': return <span className="inline-flex items-center gap-1 text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded text-xs font-bold"><XCircle className="w-3 h-3"/> {t('file.status.malicious')}</span>;
+      case 'SCANNING': return <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><Clock className="w-3 h-3 animate-spin"/> {t('file.status.scanning')}</span>;
       default: return null;
     }
   };
@@ -20,8 +22,8 @@ const FileCleaning: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-         <h2 className="text-2xl font-bold text-slate-900">File Cleaning & Sanitation</h2>
-         <p className="text-slate-500">Upload files for deep content disarmament and reconstruction (CDR).</p>
+         <h2 className="text-2xl font-bold text-slate-900">{t('file.title')}</h2>
+         <p className="text-slate-500">{t('file.subtitle')}</p>
       </div>
 
       {/* Upload Area */}
@@ -29,29 +31,29 @@ const FileCleaning: React.FC = () => {
          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
             <UploadCloud className="w-8 h-8 text-blue-500" />
          </div>
-         <h3 className="text-lg font-semibold text-slate-800">Drag & Drop files here</h3>
-         <p className="text-slate-500 text-sm mt-1">or click to browse from your computer</p>
-         <p className="text-xs text-slate-400 mt-4">Supported formats: PDF, DOCX, ZIP, EXE (Max 500MB)</p>
+         <h3 className="text-lg font-semibold text-slate-800">{t('file.drop')}</h3>
+         <p className="text-slate-500 text-sm mt-1">{t('file.browse')}</p>
+         <p className="text-xs text-slate-400 mt-4">{t('file.formats')}</p>
       </div>
 
       {/* Task List */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Recent Cleaning Tasks</h3>
+            <h3 className="font-semibold text-slate-800">{t('file.recent')}</h3>
             <div className="relative">
                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-               <input type="text" placeholder="Search tasks..." className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" />
+               <input type="text" placeholder={t('file.search')} className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" />
             </div>
          </div>
          <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
                <tr>
-                  <th className="px-6 py-3 font-medium">Task ID</th>
-                  <th className="px-6 py-3 font-medium">Filename</th>
-                  <th className="px-6 py-3 font-medium">Size</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium">Submitted</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.task')}</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.filename')}</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.size')}</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.status')}</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.submitted')}</th>
+                  <th className="px-6 py-3 font-medium text-right"></th>
                </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -67,10 +69,10 @@ const FileCleaning: React.FC = () => {
                      <td className="px-6 py-4 text-slate-500">{task.time}</td>
                      <td className="px-6 py-4 text-right">
                         {task.status === 'CLEAN' && (
-                           <button className="text-blue-600 hover:underline font-medium">Download</button>
+                           <button className="text-blue-600 hover:underline font-medium">{t('file.download')}</button>
                         )}
                         {task.status === 'MALICIOUS' && (
-                           <button className="text-slate-400 hover:text-slate-600">View Report</button>
+                           <button className="text-slate-400 hover:text-slate-600">{t('file.view_report')}</button>
                         )}
                      </td>
                   </tr>
