@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Role } from '../../types';
 import { 
-  Cpu, HardDrive, Activity, Server, Zap, Video, FileScan, CheckCircle2, AlertTriangle, XCircle 
+  Cpu, HardDrive, Activity, Server, Zap, Video, FileScan, CheckCircle2, AlertTriangle 
 } from 'lucide-react';
 import { useLanguage } from '../../i18n';
+import { backend, SystemStats, ThreatStats } from '../../services/backend';
 
 interface DashboardProps {
   role: Role;
@@ -11,6 +12,24 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ role }) => {
   const { t } = useLanguage();
+  const [data, setData] = useState<{system: SystemStats, threats: ThreatStats}>(backend.getSystemData());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+        setData(backend.getSystemData());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const { system, threats } = data;
+  
+  // Calculate uptime string
+  const getUptimeString = () => {
+    const diff = Date.now() - threats.uptime_start;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return `${days}d ${hours}h`;
+  };
 
   return (
     <div className="space-y-6">
@@ -22,14 +41,14 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-sm font-medium text-slate-500">{t('dash.cpu')}</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">32%</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">{system.cpu.toFixed(1)}%</h3>
             </div>
             <div className="p-2 bg-blue-100 rounded-lg">
               <Cpu className="w-6 h-6 text-blue-600" />
             </div>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '32%' }}></div>
+            <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${system.cpu}%` }}></div>
           </div>
           <p className="text-xs text-slate-500 mt-2">16 Cores Active</p>
         </div>
@@ -38,39 +57,39 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-sm font-medium text-slate-500">{t('dash.memory')}</p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">12.4 GB</h3>
+              <h3 className="text-2xl font-bold text-emerald-600 mt-1">{system.memory.used.toFixed(1)} GB</h3>
             </div>
             <div className="p-2 bg-emerald-100 rounded-lg">
               <Activity className="w-6 h-6 text-emerald-600" />
             </div>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2">
-            <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '45%' }}></div>
+            <div className="bg-emerald-600 h-2 rounded-full transition-all duration-500" style={{ width: `${(system.memory.used / system.memory.total) * 100}%` }}></div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Total: 32 GB</p>
+          <p className="text-xs text-slate-500 mt-2">Total: {system.memory.total} GB</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-sm font-medium text-slate-500">{t('dash.disk')}</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-1">68%</h3>
+              <h3 className="text-2xl font-bold text-amber-600 mt-1">{system.disk.used}%</h3>
             </div>
             <div className="p-2 bg-amber-100 rounded-lg">
               <HardDrive className="w-6 h-6 text-amber-600" />
             </div>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2">
-            <div className="bg-amber-600 h-2 rounded-full" style={{ width: '68%' }}></div>
+            <div className="bg-amber-600 h-2 rounded-full transition-all duration-500" style={{ width: `${system.disk.used}%` }}></div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Healthy (RAID 5)</p>
+          <p className="text-xs text-slate-500 mt-2">Healthy (RAID 5 - SQLite)</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-sm font-medium text-slate-500">{t('dash.uptime')}</p>
-              <h3 className="text-2xl font-bold text-indigo-600 mt-1">45d 12h</h3>
+              <h3 className="text-2xl font-bold text-indigo-600 mt-1">{getUptimeString()}</h3>
             </div>
             <div className="p-2 bg-indigo-100 rounded-lg">
               <Server className="w-6 h-6 text-indigo-600" />
@@ -105,30 +124,19 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td className="px-6 py-4 font-medium">Core Firewall Engine</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
-                  <td className="px-6 py-4">Low</td>
-                  <td className="px-6 py-4 text-slate-500">Just now</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">Video Analysis Daemon</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
-                  <td className="px-6 py-4 text-amber-600 font-medium">High</td>
-                  <td className="px-6 py-4 text-slate-500">1 min ago</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">File Scanning SandBox</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1"/> {t('dash.running')}</span></td>
-                  <td className="px-6 py-4">Medium</td>
-                  <td className="px-6 py-4 text-slate-500">Just now</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">Log Aggregator</td>
-                  <td className="px-6 py-4"><span className="inline-flex items-center text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-bold"><AlertTriangle className="w-3 h-3 mr-1"/> {t('dash.degraded')}</span></td>
-                  <td className="px-6 py-4">High</td>
-                  <td className="px-6 py-4 text-slate-500">5 mins ago</td>
-                </tr>
+                {system.services.map((svc, idx) => (
+                    <tr key={idx}>
+                    <td className="px-6 py-4 font-medium">{svc.name}</td>
+                    <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${svc.status === 'Running' ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'}`}>
+                            {svc.status === 'Running' ? <CheckCircle2 className="w-3 h-3 mr-1"/> : <AlertTriangle className="w-3 h-3 mr-1"/>} 
+                            {t(svc.status === 'Running' ? 'dash.running' : 'dash.degraded')}
+                        </span>
+                    </td>
+                    <td className={`px-6 py-4 font-medium ${svc.load === 'High' ? 'text-amber-600' : ''}`}>{svc.load}</td>
+                    <td className="px-6 py-4 text-slate-500">{svc.lastCheck}</td>
+                    </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -155,15 +163,15 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
              <FileScan className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
              <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_file')}</h3>
-             <div className="text-4xl font-bold mb-4">1,402</div>
+             <div className="text-4xl font-bold mb-4">{threats.total_intrusions + 1400}</div>
              <div className="flex flex-col space-y-2 text-sm opacity-80">
                <div className="flex justify-between">
                  <span>Pending:</span>
-                 <span className="font-bold">45</span>
+                 <span className="font-bold">0</span>
                </div>
                <div className="flex justify-between">
-                 <span>Malware Found:</span>
-                 <span className="font-bold text-red-100">3</span>
+                 <span>Sanitized:</span>
+                 <span className="font-bold text-white">{threats.total_intrusions}</span>
                </div>
              </div>
           </div>
@@ -175,12 +183,12 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
             </div>
             <div className="flex justify-around text-center">
               <div>
-                <div className="text-2xl font-bold text-slate-900">842</div>
+                <div className="text-2xl font-bold text-slate-900">{threats.total_ddos}</div>
                 <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.ddos_attacks')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>
               <div>
-                <div className="text-2xl font-bold text-slate-900">15</div>
+                <div className="text-2xl font-bold text-slate-900">{threats.total_intrusions}</div>
                 <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.intrusions')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>

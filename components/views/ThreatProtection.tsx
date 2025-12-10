@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Zap, AlertOctagon, Activity } from 'lucide-react';
 import { useLanguage } from '../../i18n';
+import { backend } from '../../services/backend';
 
 const ThreatProtection: React.FC = () => {
-  const [ddosEnabled, setDdosEnabled] = useState(true);
-  const [synThreshold, setSynThreshold] = useState(1000);
-  const [udpThreshold, setUdpThreshold] = useState(2000);
+  const [data, setData] = useState(backend.getSystemData().threats);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+       setData(backend.getSystemData().threats);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const toggleDdos = () => {
+     backend.toggleDdos(!data.mitigating);
+     // Update local state immediately for better UI response
+     setData(prev => ({ ...prev, mitigating: !prev.mitigating }));
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -16,14 +28,14 @@ const ThreatProtection: React.FC = () => {
           <p className="text-slate-500">{t('threat.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-           <span className={`text-sm font-medium ${ddosEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>
-             Engine: {ddosEnabled ? t('threat.active') : t('threat.disabled')}
+           <span className={`text-sm font-medium ${data.mitigating ? 'text-emerald-600' : 'text-slate-500'}`}>
+             Engine: {data.mitigating ? t('threat.active') : t('threat.disabled')}
            </span>
            <button 
-             onClick={() => setDdosEnabled(!ddosEnabled)}
-             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${ddosEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+             onClick={toggleDdos}
+             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.mitigating ? 'bg-emerald-500' : 'bg-slate-300'}`}
            >
-             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${ddosEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.mitigating ? 'translate-x-6' : 'translate-x-1'}`} />
            </button>
         </div>
       </div>
@@ -42,19 +54,21 @@ const ThreatProtection: React.FC = () => {
                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.pps')}</div>
-                    <div className="text-2xl font-mono font-bold text-blue-400">45.2K</div>
+                    <div className="text-2xl font-mono font-bold text-blue-400">{data.pps.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.dropped')}</div>
-                    <div className="text-2xl font-mono font-bold text-red-400">1,204</div>
+                    <div className="text-2xl font-mono font-bold text-red-400">{data.dropped.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.sources')}</div>
-                    <div className="text-2xl font-mono font-bold text-amber-400">12</div>
+                    <div className="text-2xl font-mono font-bold text-amber-400">{data.sources}</div>
                   </div>
                    <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('dash.status')}</div>
-                    <div className="text-2xl font-bold text-emerald-400">{t('threat.mitigating')}</div>
+                    <div className={`text-2xl font-bold ${data.mitigating ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        {data.mitigating ? t('threat.mitigating') : 'Idle'}
+                    </div>
                   </div>
                </div>
             </div>
@@ -74,15 +88,14 @@ const ThreatProtection: React.FC = () => {
                <div>
                   <div className="flex justify-between text-sm mb-1">
                      <span className="font-medium text-slate-700">{t('threat.threshold')}</span>
-                     <span className="text-blue-600 font-mono">{synThreshold}</span>
+                     <span className="text-blue-600 font-mono">1000</span>
                   </div>
                   <input 
                     type="range" 
                     min="100" 
                     max="10000" 
                     step="100"
-                    value={synThreshold}
-                    onChange={(e) => setSynThreshold(Number(e.target.value))}
+                    defaultValue={1000}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
                   />
                </div>
@@ -110,15 +123,14 @@ const ThreatProtection: React.FC = () => {
                <div>
                   <div className="flex justify-between text-sm mb-1">
                      <span className="font-medium text-slate-700">{t('threat.threshold')}</span>
-                     <span className="text-blue-600 font-mono">{udpThreshold}</span>
+                     <span className="text-blue-600 font-mono">2000</span>
                   </div>
                   <input 
                     type="range" 
                     min="100" 
                     max="10000" 
                     step="100"
-                    value={udpThreshold}
-                    onChange={(e) => setUdpThreshold(Number(e.target.value))}
+                    defaultValue={2000}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
                   />
                </div>
