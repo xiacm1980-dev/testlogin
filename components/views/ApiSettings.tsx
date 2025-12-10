@@ -18,7 +18,7 @@ const ApiSettings: React.FC = () => {
              </div>
              <div>
                 <h3 className="font-semibold text-lg text-slate-800">{t('api.rest_title')}</h3>
-                <p className="text-xs text-slate-500">Base URL: https://gateway.secguard.local/api/v1</p>
+                <p className="text-xs text-slate-500">Base URL: https://gateway.aegis.local/api/v1</p>
              </div>
              <div className="ml-auto">
                 <ToggleRight className="w-10 h-10 text-emerald-500 cursor-pointer" />
@@ -34,6 +34,27 @@ const ApiSettings: React.FC = () => {
                   <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"><RefreshCw className="w-4 h-4" /></button>
                </div>
                <p className="text-xs text-slate-400">{t('api.master_key_desc')}</p>
+            </div>
+
+             <div className="space-y-2">
+               <label className="text-sm font-medium text-slate-700">{t('api.mode')}</label>
+               <div className="flex gap-4">
+                   <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-3 w-full bg-slate-50">
+                      <input type="checkbox" checked disabled className="accent-blue-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">Synchronous (/clean/sync)</span>
+                        <span className="text-xs text-slate-500">Wait for file cleaning response (Max 30s)</span>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-3 w-full bg-slate-50">
+                      <input type="checkbox" checked disabled className="accent-blue-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">Asynchronous (/clean/async)</span>
+                        <span className="text-xs text-slate-500">Submit task ID and poll for status</span>
+                      </div>
+                   </div>
+               </div>
+               <p className="text-xs text-slate-400">{t('api.mode_desc')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

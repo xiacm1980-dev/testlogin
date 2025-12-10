@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, RefreshCw, Server, Globe, Clock, History, Trash2, Download, Upload } from 'lucide-react';
+import { Save, RefreshCw, Server, Globe, Clock, History, Trash2, Download, Upload, Database } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 
 const SystemConfig: React.FC = () => {
@@ -8,7 +8,7 @@ const SystemConfig: React.FC = () => {
   const { t } = useLanguage();
   
   // Network State
-  const [hostname, setHostname] = useState('sg-firewall-core-01');
+  const [hostname, setHostname] = useState('aegis-core-01');
   const [dns1, setDns1] = useState('8.8.8.8');
   
   // Log Policy State
@@ -93,12 +93,16 @@ const SystemConfig: React.FC = () => {
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex items-center gap-3">
         <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-          <Trash2 className="w-5 h-5" />
+          <Database className="w-5 h-5" />
         </div>
         <h3 className="font-semibold text-lg text-slate-800">{t('config.logs.title')}</h3>
       </div>
       <div className="p-6 space-y-8">
         <div>
+           <div className="flex items-center gap-2 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm">
+             <Database className="w-4 h-4"/>
+             <span>Storage Engine: <strong>SQLite 3.42.0</strong> (Persistent Storage)</span>
+           </div>
           <label className="flex items-center justify-between mb-4">
              <span className="text-base font-medium text-slate-800">{t('config.logs.retention')}</span>
              <span className="px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-lg">{logRetention} Days</span>
@@ -174,7 +178,7 @@ const SystemConfig: React.FC = () => {
              <li key={i} className="px-6 py-3 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                   <span className="font-medium text-slate-700">backup_auto_daily_{i}.enc</span>
+                   <span className="font-medium text-slate-700">backup_auto_daily_{i}.sqlite</span>
                 </div>
                 <span className="text-slate-500">2023-10-2{7-i} 03:00 AM</span>
              </li>
@@ -216,7 +220,7 @@ const SystemConfig: React.FC = () => {
             activeTab === 'logs' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-300/50'
           }`}
         >
-          <Trash2 className="w-4 h-4" /> {t('config.tab.logs')}
+          <Database className="w-4 h-4" /> {t('config.tab.logs')}
         </button>
         <button
           onClick={() => setActiveTab('backup')}

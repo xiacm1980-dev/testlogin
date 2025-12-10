@@ -63,8 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
   return (
     <div className="w-64 bg-slate-900 text-white h-screen fixed left-0 top-0 flex flex-col shadow-xl z-20">
       <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
-        <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mr-3 font-bold text-lg">S</div>
-        <span className="text-xl font-bold tracking-tight">SecGuard</span>
+        <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mr-3 font-bold text-lg">A</div>
+        <span className="text-xl font-bold tracking-tight">Aegis CDR</span>
       </div>
 
       <div className="p-4 flex-1 overflow-y-auto scrollbar-hide">

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { UploadCloud, File, CheckCircle, XCircle, Clock, Search } from 'lucide-react';
+import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 
 const FileCleaning: React.FC = () => {
   const [tasks, setTasks] = useState([
-    { id: 'T-10293', name: 'financial_report_q3.pdf', size: '2.4 MB', status: 'CLEAN', time: '10:42 AM' },
-    { id: 'T-10294', name: 'suspicious_installer.exe', size: '15.1 MB', status: 'MALICIOUS', time: '10:45 AM' },
-    { id: 'T-10295', name: 'site_backup.zip', size: '142 MB', status: 'SCANNING', time: '10:48 AM' },
+    { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', status: 'CLEAN', time: '10:42 AM' },
+    { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', status: 'MALICIOUS', time: '10:45 AM' },
+    { id: 'T-10295', name: 'surveillance_dump.avi', size: '142 MB', status: 'SCANNING', time: '10:48 AM' },
   ]);
   const { t } = useLanguage();
 
@@ -24,6 +24,30 @@ const FileCleaning: React.FC = () => {
       <div>
          <h2 className="text-2xl font-bold text-slate-900">{t('file.title')}</h2>
          <p className="text-slate-500">{t('file.subtitle')}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FileType className="w-5 h-5" /></div>
+               <h4 className="font-semibold text-slate-800">{t('file.rule.doc')}</h4>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">{t('file.rule.doc_desc')}</p>
+         </div>
+         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><Image className="w-5 h-5" /></div>
+               <h4 className="font-semibold text-slate-800">{t('file.rule.img')}</h4>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">{t('file.rule.img_desc')}</p>
+         </div>
+         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><Film className="w-5 h-5" /></div>
+               <h4 className="font-semibold text-slate-800">{t('file.rule.av')}</h4>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">{t('file.rule.av_desc')}</p>
+         </div>
       </div>
 
       {/* Upload Area */}

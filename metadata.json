@@ -1,5 +1,5 @@
 {
-  "name": "SecGuard Manager",
-  "description": "A comprehensive role-based security device management system featuring System Administration, Security Policy enforcement, and Audit Logging.",
+  "name": "Aegis CDR System",
+  "description": "Deep Content Disarm and Reconstruction System featuring Doc-to-PDF, Image Sanitization, and Audio/Video Re-encoding.",
   "requestFramePermissions": []
 }
