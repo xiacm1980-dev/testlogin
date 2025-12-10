@@ -180,6 +180,18 @@ const translations = {
     'file.rule.img_desc': 'Rotate 4x (90°), Sharpen, Resize 95%, Convert to PNG.',
     'file.rule.av': 'A/V CDR',
     'file.rule.av_desc': 'Decode H264/YUV, Frame Compress, Add White Noise, Re-encode.',
+    
+    // File Processing Steps
+    'file.step.uploading': 'Uploading...',
+    'file.step.doc_convert': 'Converting to PDF...',
+    'file.step.doc_strip': 'Stripping Macros/Scripts...',
+    'file.step.img_rotate': 'Rotating 90° (4x)...',
+    'file.step.img_sharpen': 'Sharpening & Resizing...',
+    'file.step.img_convert': 'Converting to PNG...',
+    'file.step.av_decode': 'Decoding H.264/Audio...',
+    'file.step.av_noise': 'Injecting White Noise...',
+    'file.step.av_compress': 'Compressing Frame Rate...',
+    'file.step.av_encode': 'Re-encoding to H.264/MP3...',
 
     // API Settings
     'api.title': 'API Interface Settings',
@@ -399,6 +411,18 @@ const translations = {
     'file.rule.img_desc': '旋转 4 次 (90°)，轻微锐化，缩放至 95%，转为 PNG。',
     'file.rule.av': '音视频 CDR',
     'file.rule.av_desc': 'H264/YUV 解码，帧率压缩，加入白噪声，重新编码为 MP4/MP3。',
+
+    // File Processing Steps
+    'file.step.uploading': '上传中...',
+    'file.step.doc_convert': '转换为 PDF...',
+    'file.step.doc_strip': '剥离宏与脚本...',
+    'file.step.img_rotate': '旋转 90° (4次)...',
+    'file.step.img_sharpen': '锐化与调整大小...',
+    'file.step.img_convert': '转换为 PNG...',
+    'file.step.av_decode': '解码 H.264/Audio...',
+    'file.step.av_noise': '注入白噪声...',
+    'file.step.av_compress': '压缩帧率...',
+    'file.step.av_encode': '重编码 H.264/MP3...',
 
     // API Settings
     'api.title': 'API 接口设置',

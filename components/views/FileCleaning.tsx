@@ -1,20 +1,145 @@
-import React, { useState } from 'react';
-import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film, Loader2, Download } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 
+interface FileTask {
+  id: string;
+  name: string;
+  size: string;
+  status: 'CLEAN' | 'MALICIOUS' | 'SCANNING' | 'UPLOADING';
+  time: string;
+  progressStep?: string; // To show current CDR step
+  type: 'DOC' | 'IMG' | 'AV' | 'OTHER';
+}
+
 const FileCleaning: React.FC = () => {
-  const [tasks, setTasks] = useState([
-    { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', status: 'CLEAN', time: '10:42 AM' },
-    { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', status: 'MALICIOUS', time: '10:45 AM' },
-    { id: 'T-10295', name: 'surveillance_dump.avi', size: '142 MB', status: 'SCANNING', time: '10:48 AM' },
+  const [tasks, setTasks] = useState<FileTask[]>([
+    { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', status: 'CLEAN', time: '10:42 AM', type: 'DOC' },
+    { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', status: 'MALICIOUS', time: '10:45 AM', type: 'IMG' },
+    { id: 'T-10295', name: 'surveillance_dump.avi', size: '142 MB', status: 'SCANNING', time: '10:48 AM', type: 'AV', progressStep: 'file.step.av_noise' },
   ]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(Array.from(e.target.files));
+    }
+  };
+
+  const getFileType = (filename: string): 'DOC' | 'IMG' | 'AV' | 'OTHER' => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'wps'].includes(ext || '')) return 'DOC';
+    if (['jpg', 'jpeg', 'png', 'bmp', 'gif'].includes(ext || '')) return 'IMG';
+    if (['mp4', 'avi', 'mov', 'wav', 'mp3', 'flv', 'wma'].includes(ext || '')) return 'AV';
+    return 'OTHER';
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const handleFiles = (files: File[]) => {
+    const newTasks: FileTask[] = files.map(file => ({
+      id: `T-${Math.floor(Math.random() * 10000)}`,
+      name: file.name,
+      size: formatSize(file.size),
+      status: 'UPLOADING',
+      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      type: getFileType(file.name),
+      progressStep: 'file.step.uploading'
+    }));
+
+    setTasks(prev => [...newTasks, ...prev]);
+
+    // Simulate Processing for each file
+    newTasks.forEach(task => processTask(task.id, task.type));
+  };
+
+  const processTask = (taskId: string, type: 'DOC' | 'IMG' | 'AV' | 'OTHER') => {
+    // Helper to update task status
+    const update = (status: FileTask['status'], step?: string) => {
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status, progressStep: step } : t));
+    };
+
+    // Simulate CDR Steps
+    setTimeout(() => {
+        update('SCANNING', 'file.step.uploading');
+        
+        // Define steps based on type
+        const steps = [];
+        if (type === 'DOC') {
+            steps.push({ msg: 'file.step.doc_convert', delay: 1500 });
+            steps.push({ msg: 'file.step.doc_strip', delay: 3000 });
+        } else if (type === 'IMG') {
+            steps.push({ msg: 'file.step.img_rotate', delay: 1000 });
+            steps.push({ msg: 'file.step.img_sharpen', delay: 2000 });
+            steps.push({ msg: 'file.step.img_convert', delay: 3000 });
+        } else if (type === 'AV') {
+            steps.push({ msg: 'file.step.av_decode', delay: 1500 });
+            steps.push({ msg: 'file.step.av_noise', delay: 3500 });
+            steps.push({ msg: 'file.step.av_compress', delay: 5500 });
+            steps.push({ msg: 'file.step.av_encode', delay: 7500 });
+        } else {
+            steps.push({ msg: 'file.status.scanning', delay: 1000 });
+        }
+
+        // Execute steps
+        steps.forEach((step, index) => {
+            setTimeout(() => {
+                update('SCANNING', step.msg);
+                // Last step completes the task
+                if (index === steps.length - 1) {
+                    setTimeout(() => {
+                        update('CLEAN', undefined);
+                    }, 1000);
+                }
+            }, step.delay);
+        });
+
+    }, 1000);
+  };
+
+  const handleDownload = (fileName: string) => {
+      // Simulate download
+      const link = document.createElement('a');
+      link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('Simulated Cleaned Content');
+      link.download = `cleaned_${fileName}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+
+  const getStatusBadge = (task: FileTask) => {
+    switch(task.status) {
       case 'CLEAN': return <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded text-xs font-bold"><CheckCircle className="w-3 h-3"/> {t('file.status.clean')}</span>;
       case 'MALICIOUS': return <span className="inline-flex items-center gap-1 text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded text-xs font-bold"><XCircle className="w-3 h-3"/> {t('file.status.malicious')}</span>;
-      case 'SCANNING': return <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><Clock className="w-3 h-3 animate-spin"/> {t('file.status.scanning')}</span>;
+      case 'SCANNING': 
+      case 'UPLOADING':
+        return (
+            <div className="flex flex-col">
+                <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold mb-1 w-fit">
+                    <Loader2 className="w-3 h-3 animate-spin"/> 
+                    {task.status === 'UPLOADING' ? t('file.step.uploading') : t('file.status.scanning')}
+                </span>
+                {task.progressStep && <span className="text-[10px] text-slate-400 animate-pulse">{t(task.progressStep)}</span>}
+            </div>
+        );
       default: return null;
     }
   };
@@ -51,7 +176,19 @@ const FileCleaning: React.FC = () => {
       </div>
 
       {/* Upload Area */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center border-dashed border-2 hover:border-blue-400 transition-colors cursor-pointer group">
+      <div 
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center border-dashed border-2 hover:border-blue-400 transition-colors cursor-pointer group"
+      >
+         <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileSelect} 
+            className="hidden" 
+            multiple 
+         />
          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
             <UploadCloud className="w-8 h-8 text-blue-500" />
          </div>
@@ -85,15 +222,23 @@ const FileCleaning: React.FC = () => {
                   <tr key={task.id} className="hover:bg-slate-50">
                      <td className="px-6 py-4 font-mono text-slate-500">{task.id}</td>
                      <td className="px-6 py-4 font-medium text-slate-800 flex items-center gap-2">
-                        <File className="w-4 h-4 text-slate-400" />
+                        {task.type === 'IMG' ? <Image className="w-4 h-4 text-purple-400" /> : 
+                         task.type === 'AV' ? <Film className="w-4 h-4 text-rose-400" /> :
+                         <File className="w-4 h-4 text-blue-400" />}
                         {task.name}
                      </td>
                      <td className="px-6 py-4 text-slate-500">{task.size}</td>
-                     <td className="px-6 py-4">{getStatusBadge(task.status)}</td>
+                     <td className="px-6 py-4">{getStatusBadge(task)}</td>
                      <td className="px-6 py-4 text-slate-500">{task.time}</td>
                      <td className="px-6 py-4 text-right">
                         {task.status === 'CLEAN' && (
-                           <button className="text-blue-600 hover:underline font-medium">{t('file.download')}</button>
+                           <button 
+                             onClick={() => handleDownload(task.name)}
+                             className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
+                           >
+                             <Download className="w-4 h-4" />
+                             {t('file.download')}
+                           </button>
                         )}
                         {task.status === 'MALICIOUS' && (
                            <button className="text-slate-400 hover:text-slate-600">{t('file.view_report')}</button>
