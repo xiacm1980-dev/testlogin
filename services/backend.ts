@@ -20,45 +20,65 @@ export interface ThreatStats {
   dropped: number;
   sources: number;
   mitigating: boolean;
-  total_ddos: number;
-  total_intrusions: number;
+  
+  // Persisted Stats as requested
+  malware_detected: number; // "含有恶意代码的次数"
+  total_attacks: number;    // "收到攻击次数"
+  active_rules: number;     // "威胁防御规则数量"
+  
   uptime_start: number;
+  active_video_tasks: number;
+  active_file_tasks: number;
+}
+
+export interface ServiceStatus {
+  name: string;      // Translation Key
+  status: 'running' | 'degraded' | 'stopped';
+  load: 'low' | 'medium' | 'high';
+  lastCheck: string; // Translation Key
 }
 
 export interface SystemStats {
   cpu: number;
   memory: { used: number; total: number };
   disk: { used: number; total: number };
-  services: { name: string; status: 'Running' | 'Degraded' | 'Stopped'; load: 'Low' | 'Medium' | 'High'; lastCheck: string }[];
+  services: ServiceStatus[];
 }
 
 const STORAGE_KEYS = {
   TASKS: 'aegis_db_tasks',
   THREATS: 'aegis_db_threats',
-  SYSTEM: 'aegis_db_system' // Usually live, but we persist some settings
+  SYSTEM: 'aegis_db_system' 
 };
 
 // Singleton Mock Backend Class
 class BackendService {
   private tasks: Task[] = [];
+  
+  // Default Initial Data
   private threats: ThreatStats = {
     pps: 45200,
     dropped: 1204,
     sources: 12,
     mitigating: true,
-    total_ddos: 842,
-    total_intrusions: 15,
-    uptime_start: Date.now() - (45 * 24 * 3600 * 1000) // 45 days ago
+    malware_detected: 142,
+    total_attacks: 8942,
+    active_rules: 4218,
+    uptime_start: Date.now() - (45 * 24 * 3600 * 1000), // 45 days ago
+    active_video_tasks: 12,
+    active_file_tasks: 85
   };
+
+  // Services ordered: File Sandbox, Video, Firewall, Logs
   private system: SystemStats = {
     cpu: 32,
     memory: { used: 12.4, total: 32 },
     disk: { used: 68, total: 100 },
     services: [
-      { name: 'Core Firewall Engine', status: 'Running', load: 'Low', lastCheck: 'Just now' },
-      { name: 'Video Analysis Daemon', status: 'Running', load: 'High', lastCheck: '1 min ago' },
-      { name: 'File Scanning SandBox', status: 'Running', load: 'Medium', lastCheck: 'Just now' },
-      { name: 'Log Aggregator', status: 'Degraded', load: 'High', lastCheck: '5 mins ago' }
+      { name: 'service.sandbox', status: 'running', load: 'medium', lastCheck: 'time.just_now' },
+      { name: 'service.video', status: 'running', load: 'high', lastCheck: 'time.1_min_ago' },
+      { name: 'service.firewall', status: 'running', load: 'low', lastCheck: 'time.just_now' },
+      { name: 'service.logs', status: 'degraded', load: 'high', lastCheck: 'time.5_min_ago' }
     ]
   };
 
@@ -72,8 +92,14 @@ class BackendService {
   private load() {
     const t = localStorage.getItem(STORAGE_KEYS.TASKS);
     const th = localStorage.getItem(STORAGE_KEYS.THREATS);
+    // Note: We generally don't persist system.services status as it's real-time, but for this mock we reset to default
+    
     if (t) this.tasks = JSON.parse(t);
-    if (th) this.threats = JSON.parse(th);
+    if (th) {
+      const savedThreats = JSON.parse(th);
+      // Merge saved stats with current structure in case we added new fields
+      this.threats = { ...this.threats, ...savedThreats };
+    }
     
     // Seed initial tasks if empty
     if (this.tasks.length === 0) {
@@ -102,23 +128,35 @@ class BackendService {
     this.system.cpu = Math.max(5, Math.min(100, this.system.cpu + (Math.random() * 10 - 5)));
     this.system.memory.used = Math.max(4, Math.min(30, this.system.memory.used + (Math.random() * 2 - 1)));
     
-    // 2. Simulate Threat Activity
-    if (Math.random() > 0.8) {
-      this.threats.pps += Math.floor(Math.random() * 100 - 50);
+    // 2. Simulate Threat Activity & Persistence
+    if (Math.random() > 0.7) {
+      this.threats.pps = Math.max(0, this.threats.pps + Math.floor(Math.random() * 200 - 100));
       this.threats.dropped += Math.floor(Math.random() * 5);
-      this.threats.total_ddos += Math.random() > 0.99 ? 1 : 0;
+      
+      // Increment Attack Count occasionally
+      if (Math.random() > 0.8) {
+         this.threats.total_attacks += 1;
+      }
     }
 
     // 3. Process Tasks (The Core CDR Logic Simulation)
     let tasksChanged = false;
+    let activeFileTasksCount = 0;
+    
     this.tasks.forEach(task => {
       if (task.status === 'UPLOADING' || task.status === 'SCANNING') {
         tasksChanged = true;
+        activeFileTasksCount++;
         this.processTaskStep(task);
       }
     });
+    
+    this.threats.active_file_tasks = activeFileTasksCount;
 
     if (tasksChanged) this.save();
+    
+    // Periodically save stats even if tasks didn't change (for attacks/uptime/etc)
+    if (Math.random() > 0.9) this.save();
   }
 
   private processTaskStep(task: Task) {
@@ -173,10 +211,17 @@ class BackendService {
       }
     } else {
       // Done
-      task.status = 'CLEAN';
+      // Randomly classify as MALICIOUS (simulating malware detection)
+      // For this demo, we'll say 10% are malicious
+      const isMalicious = Math.random() < 0.1;
+      
+      task.status = isMalicious ? 'MALICIOUS' : 'CLEAN';
+      task.currentStep = isMalicious ? 'file.status.malicious' : 'file.status.clean';
       task.completedAt = new Date().toLocaleTimeString();
-      this.threats.total_intrusions += 1; // Increment sanitized count
-      this.threats.total_ddos += 0; // Just to trigger update
+      
+      if (isMalicious) {
+          this.threats.malware_detected += 1;
+      }
     }
   }
 

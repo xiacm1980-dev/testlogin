@@ -124,19 +124,42 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {system.services.map((svc, idx) => (
+                {system.services.map((svc, idx) => {
+                  // Determine status styling
+                  let statusColor = 'text-green-600 bg-green-50';
+                  let statusIcon = <CheckCircle2 className="w-3 h-3 mr-1"/>;
+                  let statusKey = 'status.running';
+                  
+                  if (svc.status === 'degraded') {
+                    statusColor = 'text-amber-600 bg-amber-50';
+                    statusIcon = <AlertTriangle className="w-3 h-3 mr-1"/>;
+                    statusKey = 'status.degraded';
+                  } else if (svc.status === 'stopped') {
+                    statusColor = 'text-red-600 bg-red-50';
+                    statusIcon = <AlertTriangle className="w-3 h-3 mr-1"/>;
+                    statusKey = 'status.stopped';
+                  }
+
+                  // Determine load styling
+                  let loadKey = 'load.low';
+                  let loadColor = '';
+                  if (svc.load === 'medium') { loadKey = 'load.medium'; }
+                  else if (svc.load === 'high') { loadKey = 'load.high'; loadColor = 'text-amber-600'; }
+
+                  return (
                     <tr key={idx}>
-                    <td className="px-6 py-4 font-medium">{svc.name}</td>
+                    <td className="px-6 py-4 font-medium">{t(svc.name)}</td>
                     <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${svc.status === 'Running' ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'}`}>
-                            {svc.status === 'Running' ? <CheckCircle2 className="w-3 h-3 mr-1"/> : <AlertTriangle className="w-3 h-3 mr-1"/>} 
-                            {t(svc.status === 'Running' ? 'dash.running' : 'dash.degraded')}
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                            {statusIcon} 
+                            {t(statusKey)}
                         </span>
                     </td>
-                    <td className={`px-6 py-4 font-medium ${svc.load === 'High' ? 'text-amber-600' : ''}`}>{svc.load}</td>
-                    <td className="px-6 py-4 text-slate-500">{svc.lastCheck}</td>
+                    <td className={`px-6 py-4 font-medium ${loadColor}`}>{t(loadKey)}</td>
+                    <td className="px-6 py-4 text-slate-500">{t(svc.lastCheck)}</td>
                     </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -144,38 +167,42 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
 
         {/* Task Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
-             <Video className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
-             <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_video')}</h3>
-             <div className="text-4xl font-bold mb-4">12</div>
-             <div className="flex flex-col space-y-2 text-sm opacity-80">
-               <div className="flex justify-between">
-                 <span>Ingress Streams:</span>
-                 <span className="font-bold">12</span>
-               </div>
-               <div className="flex justify-between">
-                 <span>Cleaned/Forwarded:</span>
-                 <span className="font-bold">12</span>
-               </div>
-             </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
+          
+           {/* Card 1: File CDR Tasks (Swapped Position) */}
+           <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
              <FileScan className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
              <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_file')}</h3>
-             <div className="text-4xl font-bold mb-4">{threats.total_intrusions + 1400}</div>
+             <div className="text-4xl font-bold mb-4">{threats.active_file_tasks}</div>
              <div className="flex flex-col space-y-2 text-sm opacity-80">
                <div className="flex justify-between">
                  <span>Pending:</span>
-                 <span className="font-bold">0</span>
+                 <span className="font-bold">{threats.active_file_tasks}</span>
                </div>
                <div className="flex justify-between">
-                 <span>Sanitized:</span>
-                 <span className="font-bold text-white">{threats.total_intrusions}</span>
+                 <span>Processed:</span>
+                 <span className="font-bold text-white">{(threats.malware_detected * 5 + 230).toLocaleString()}</span>
                </div>
              </div>
           </div>
 
+          {/* Card 2: Video Stream Tasks (Swapped Position) */}
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
+             <Video className="w-24 h-24 absolute -right-6 -bottom-6 text-white opacity-20" />
+             <h3 className="text-lg font-medium opacity-90 mb-2">{t('dash.task_video')}</h3>
+             <div className="text-4xl font-bold mb-4">{threats.active_video_tasks}</div>
+             <div className="flex flex-col space-y-2 text-sm opacity-80">
+               <div className="flex justify-between">
+                 <span>Ingress Streams:</span>
+                 <span className="font-bold">{threats.active_video_tasks}</span>
+               </div>
+               <div className="flex justify-between">
+                 <span>Forwarded:</span>
+                 <span className="font-bold">{threats.active_video_tasks}</span>
+               </div>
+             </div>
+          </div>
+
+          {/* Stats Bar */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 col-span-1 sm:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-orange-500" />
@@ -183,18 +210,18 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
             </div>
             <div className="flex justify-around text-center">
               <div>
-                <div className="text-2xl font-bold text-slate-900">{threats.total_ddos}</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.ddos_attacks')}</div>
+                <div className="text-2xl font-bold text-red-600">{threats.malware_detected}</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.stat_malware')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>
               <div>
-                <div className="text-2xl font-bold text-slate-900">{threats.total_intrusions}</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.intrusions')}</div>
+                <div className="text-2xl font-bold text-slate-900">{threats.total_attacks.toLocaleString()}</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.stat_attacks')}</div>
               </div>
               <div className="w-px bg-slate-200"></div>
               <div>
-                <div className="text-2xl font-bold text-slate-900">100%</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.uptime')}</div>
+                <div className="text-2xl font-bold text-emerald-600">{threats.active_rules.toLocaleString()}</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">{t('dash.stat_rules')}</div>
               </div>
             </div>
           </div>

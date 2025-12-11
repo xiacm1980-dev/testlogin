@@ -51,11 +51,30 @@ const translations = {
     'dash.last_check': 'Last Check',
     'dash.running': 'Running',
     'dash.degraded': 'Degraded',
+    'dash.stopped': 'Stopped',
     'dash.task_video': 'Active Stream Tasks',
     'dash.task_file': 'File CDR Tasks',
-    'dash.threat_stats': 'Threat Prevention Stats (24h)',
-    'dash.ddos_attacks': 'DDoS Attacks',
-    'dash.intrusions': 'Malware Sanitized',
+    'dash.threat_stats': 'Threat & Defense Statistics',
+    
+    // Stats
+    'dash.stat_malware': 'Malware Detected',
+    'dash.stat_attacks': 'Total Attacks',
+    'dash.stat_rules': 'Active Rules',
+    
+    // Service Names & Status
+    'service.sandbox': 'File Scanning Sandbox',
+    'service.video': 'Video Analysis Daemon',
+    'service.firewall': 'Core Firewall Engine',
+    'service.logs': 'Log Aggregator',
+    'status.running': 'Running',
+    'status.degraded': 'Degraded',
+    'status.stopped': 'Stopped',
+    'load.low': 'Low',
+    'load.medium': 'Medium',
+    'load.high': 'High',
+    'time.just_now': 'Just now',
+    'time.1_min_ago': '1 min ago',
+    'time.5_min_ago': '5 mins ago',
 
     // System Config
     'config.title': 'System Configuration',
@@ -282,11 +301,30 @@ const translations = {
     'dash.last_check': '最后检查',
     'dash.running': '运行中',
     'dash.degraded': '降级',
+    'dash.stopped': '已停止',
     'dash.task_video': '活跃视频流任务',
     'dash.task_file': '文件CDR任务',
-    'dash.threat_stats': '威胁防御统计 (24h)',
-    'dash.ddos_attacks': 'DDoS 攻击',
-    'dash.intrusions': '已清洗文件',
+    'dash.threat_stats': '威胁防御统计',
+    
+    // Stats
+    'dash.stat_malware': '恶意代码检测',
+    'dash.stat_attacks': '收到攻击次数',
+    'dash.stat_rules': '活跃防御规则',
+
+    // Service Names & Status
+    'service.sandbox': '文件扫描沙箱 (File Sandbox)',
+    'service.video': '视频分析守护进程 (Video Daemon)',
+    'service.firewall': '核心防火墙引擎 (Firewall Engine)',
+    'service.logs': '日志聚合器 (Log Aggregator)',
+    'status.running': '运行中',
+    'status.degraded': '性能降级',
+    'status.stopped': '已停止',
+    'load.low': '低',
+    'load.medium': '中',
+    'load.high': '高',
+    'time.just_now': '刚刚',
+    'time.1_min_ago': '1分钟前',
+    'time.5_min_ago': '5分钟前',
 
     // System Config
     'config.title': '系统配置',
