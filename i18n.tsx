@@ -518,18 +518,6 @@ const translations = {
     'file.rule.av': '音视频 CDR',
     'file.rule.av_desc': 'H264/YUV 解码，帧率压缩，加入白噪声，重新编码为 MP4/MP3。',
 
-    // File Processing Steps
-    'file.step.uploading': '上传中...',
-    'file.step.doc_convert': '转换为 PDF...',
-    'file.step.doc_strip': '剥离宏与脚本...',
-    'file.step.img_rotate': '旋转 90° (4次)...',
-    'file.step.img_sharpen': '锐化与调整大小...',
-    'file.step.img_convert': '转换为 PNG...',
-    'file.step.av_decode': '解码 H.264/Audio...',
-    'file.step.av_noise': '注入白噪声...',
-    'file.step.av_compress': '压缩帧率...',
-    'file.step.av_encode': '重编码 H.264/MP3...',
-
     // API Settings
     'api.title': 'API 接口设置',
     'api.subtitle': '管理同步与异步清洗接口。',
@@ -551,7 +539,7 @@ const translations = {
     'report.traffic_desc': '带宽使用、主要通话者和协议分布图表。',
     'report.compliance': '合规性报告',
     'report.compliance_desc': 'ISO 27001 / GDPR 合规性检查状态和违规记录。',
-    'report.generate': '生成报表 →',
+    'report.generate': '生成报表',
     'report.history': '生成历史',
     'report.col.name': '报表名称',
     'report.col.date': '日期范围',
