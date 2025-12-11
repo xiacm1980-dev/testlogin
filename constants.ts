@@ -1,12 +1,12 @@
 import { LogEntry, PolicyRule, Role } from './types';
 
 export const MOCK_LOGS: LogEntry[] = [
-  { id: 101, timestamp: '2023-10-27 10:42:01', severity: 'CRITICAL', module: 'IPS', message: 'SQL Injection attempt blocked', sourceIp: '192.168.1.55' },
-  { id: 102, timestamp: '2023-10-27 10:41:55', severity: 'INFO', module: 'AUTH', message: 'User admin logged in', user: 'admin', sourceIp: '10.0.0.5' },
-  { id: 103, timestamp: '2023-10-27 10:40:12', severity: 'WARN', module: 'SYSTEM', message: 'High memory usage detected (85%)' },
-  { id: 104, timestamp: '2023-10-27 10:38:45', severity: 'INFO', module: 'FW', message: 'Rule #4 matching traffic', sourceIp: '172.16.0.22' },
-  { id: 105, timestamp: '2023-10-27 10:35:00', severity: 'ERROR', module: 'VPN', message: 'Tunnel down: Site-to-Site A' },
-  { id: 106, timestamp: '2023-10-27 10:30:11', severity: 'INFO', module: 'AUTH', message: 'User sec_officer failed login', user: 'sec_officer' },
+  { id: 101, timestamp: '2023-10-27 10:42:01', severity: 'FATAL', module: 'THREAT', messageKey: 'SQL Injection attempt blocked', sourceIp: '192.168.1.55' },
+  { id: 102, timestamp: '2023-10-27 10:41:55', severity: 'INFO', module: 'AUTH', messageKey: 'log.msg.login_success', params: { user: 'admin' }, user: 'admin', sourceIp: '10.0.0.5' },
+  { id: 103, timestamp: '2023-10-27 10:40:12', severity: 'WARN', module: 'SYSTEM', messageKey: 'High memory usage detected (85%)' },
+  { id: 104, timestamp: '2023-10-27 10:38:45', severity: 'INFO', module: 'THREAT', messageKey: 'Rule #4 matching traffic', sourceIp: '172.16.0.22' },
+  { id: 105, timestamp: '2023-10-27 10:35:00', severity: 'ERROR', module: 'SYSTEM', messageKey: 'Tunnel down: Site-to-Site A' },
+  { id: 106, timestamp: '2023-10-27 10:30:11', severity: 'INFO', module: 'AUTH', messageKey: 'log.msg.login_fail', params: { user: 'sec_officer' }, user: 'sec_officer' },
 ];
 
 export const INITIAL_POLICIES: PolicyRule[] = [

@@ -13,6 +13,7 @@ import Reports from './components/views/Reports';
 import { Role, User, View } from './types';
 import { Key, X, Languages } from 'lucide-react';
 import { useLanguage } from './i18n';
+import { backend } from './services/backend';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,12 +22,14 @@ const App: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
 
   const handleLogin = (role: Role) => {
+    const username = role === Role.SYSADMIN ? 'sysadmin' : role === Role.SECADMIN ? 'secadmin' : 'logadmin';
     // Simulate login
     setUser({
-      username: 'admin_user',
+      username: username,
       role: role,
-      avatar: 'https://picsum.photos/200', // Placeholder
+      avatar: 'https://picsum.photos/200',
     });
+    backend.loginUser(username, role); // Log the login event
     setCurrentView(View.DASHBOARD);
   };
 
@@ -54,10 +57,12 @@ const App: React.FC = () => {
       case View.FILE_CLEANING:
         return user.role === Role.SECADMIN ? <FileCleaning /> : <Unauthorized />;
       case View.LOGS_AUDIT:
-        return user.role === Role.LOGADMIN ? <LogAudit /> : <Unauthorized />;
+        // SecAdmin and LogAdmin can see logs
+        return (user.role === Role.LOGADMIN || user.role === Role.SECADMIN) ? <LogAudit type="SYSTEM" /> : <Unauthorized />;
+      case View.ADMIN_LOGS:
+        return user.role === Role.LOGADMIN ? <LogAudit type="ADMIN" /> : <Unauthorized />;
       case View.REPORTS:
         return user.role === Role.LOGADMIN ? <Reports /> : <Unauthorized />;
-      // Fallback/Placeholder for views not fully implemented in this demo
       default:
         return <ComingSoon viewName={currentView} />;
     }
@@ -100,7 +105,7 @@ const App: React.FC = () => {
              <div className="h-6 w-px bg-slate-200"></div>
              <div className="flex items-center gap-3">
                <div className="text-right hidden sm:block">
-                 <div className="text-sm font-bold text-slate-800">Admin User</div>
+                 <div className="text-sm font-bold text-slate-800">{user.username}</div>
                  <div className="text-xs text-slate-500 uppercase">{user.role}</div>
                </div>
                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-300">

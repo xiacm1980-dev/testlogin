@@ -1,23 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Zap, AlertOctagon, Activity } from 'lucide-react';
+import { ShieldAlert, Zap, AlertOctagon, Activity, Plus } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 import { backend } from '../../services/backend';
 
 const ThreatProtection: React.FC = () => {
-  const [data, setData] = useState(backend.getSystemData().threats);
+  const [stats, setStats] = useState(backend.getSystemData().threats);
+  const [config, setConfig] = useState(backend.getThreatConfig());
+  const [newIp, setNewIp] = useState('');
   const { t } = useLanguage();
 
   useEffect(() => {
+    // Poll stats
     const timer = setInterval(() => {
-       setData(backend.getSystemData().threats);
+       setStats(backend.getSystemData().threats);
+       // We can also poll config if we expect external updates, but for now we assume this UI is the only writer
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   const toggleDdos = () => {
-     backend.toggleDdos(!data.mitigating);
-     // Update local state immediately for better UI response
-     setData(prev => ({ ...prev, mitigating: !prev.mitigating }));
+     backend.toggleDdos(!stats.mitigating);
+     setStats(prev => ({ ...prev, mitigating: !prev.mitigating }));
+  };
+
+  const handleConfigChange = (key: 'synThreshold' | 'udpThreshold', value: number) => {
+      const newConfig = { ...config, [key]: value };
+      setConfig(newConfig);
+      // Persist to backend (debouncing could be added here for production)
+      backend.updateThreatConfig(newConfig);
+  };
+
+  const addWhitelist = () => {
+      if(newIp) {
+          backend.addWhitelistIp(newIp);
+          setConfig(backend.getThreatConfig());
+          setNewIp('');
+      }
+  };
+
+  const removeWhitelist = (ip: string) => {
+      backend.removeWhitelistIp(ip);
+      setConfig(backend.getThreatConfig());
   };
 
   return (
@@ -28,14 +51,14 @@ const ThreatProtection: React.FC = () => {
           <p className="text-slate-500">{t('threat.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-           <span className={`text-sm font-medium ${data.mitigating ? 'text-emerald-600' : 'text-slate-500'}`}>
-             Engine: {data.mitigating ? t('threat.active') : t('threat.disabled')}
+           <span className={`text-sm font-medium ${stats.mitigating ? 'text-emerald-600' : 'text-slate-500'}`}>
+             Engine: {stats.mitigating ? t('threat.active') : t('threat.disabled')}
            </span>
            <button 
              onClick={toggleDdos}
-             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.mitigating ? 'bg-emerald-500' : 'bg-slate-300'}`}
+             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${stats.mitigating ? 'bg-emerald-500' : 'bg-slate-300'}`}
            >
-             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.mitigating ? 'translate-x-6' : 'translate-x-1'}`} />
+             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${stats.mitigating ? 'translate-x-6' : 'translate-x-1'}`} />
            </button>
         </div>
       </div>
@@ -54,20 +77,20 @@ const ThreatProtection: React.FC = () => {
                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.pps')}</div>
-                    <div className="text-2xl font-mono font-bold text-blue-400">{data.pps.toLocaleString()}</div>
+                    <div className="text-2xl font-mono font-bold text-blue-400">{stats.pps.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.dropped')}</div>
-                    <div className="text-2xl font-mono font-bold text-red-400">{data.dropped.toLocaleString()}</div>
+                    <div className="text-2xl font-mono font-bold text-red-400">{stats.dropped.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('threat.sources')}</div>
-                    <div className="text-2xl font-mono font-bold text-amber-400">{data.sources}</div>
+                    <div className="text-2xl font-mono font-bold text-amber-400">{stats.sources}</div>
                   </div>
                    <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('dash.status')}</div>
-                    <div className={`text-2xl font-bold ${data.mitigating ? 'text-emerald-400' : 'text-slate-400'}`}>
-                        {data.mitigating ? t('threat.mitigating') : 'Idle'}
+                    <div className={`text-2xl font-bold ${stats.mitigating ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        {stats.mitigating ? t('threat.mitigating') : 'Idle'}
                     </div>
                   </div>
                </div>
@@ -88,14 +111,15 @@ const ThreatProtection: React.FC = () => {
                <div>
                   <div className="flex justify-between text-sm mb-1">
                      <span className="font-medium text-slate-700">{t('threat.threshold')}</span>
-                     <span className="text-blue-600 font-mono">1000</span>
+                     <span className="text-blue-600 font-mono">{config.synThreshold} pps</span>
                   </div>
                   <input 
                     type="range" 
                     min="100" 
                     max="10000" 
                     step="100"
-                    defaultValue={1000}
+                    value={config.synThreshold}
+                    onChange={(e) => handleConfigChange('synThreshold', parseInt(e.target.value))}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
                   />
                </div>
@@ -105,6 +129,9 @@ const ThreatProtection: React.FC = () => {
                      <option>Drop Packet</option>
                      <option>Blacklist Source IP</option>
                   </select>
+               </div>
+               <div className="text-xs text-slate-400 italic">
+                  * Applied to iptables PREROUTING chain
                </div>
             </div>
          </div>
@@ -123,14 +150,15 @@ const ThreatProtection: React.FC = () => {
                <div>
                   <div className="flex justify-between text-sm mb-1">
                      <span className="font-medium text-slate-700">{t('threat.threshold')}</span>
-                     <span className="text-blue-600 font-mono">2000</span>
+                     <span className="text-blue-600 font-mono">{config.udpThreshold} pps</span>
                   </div>
                   <input 
                     type="range" 
                     min="100" 
                     max="10000" 
                     step="100"
-                    defaultValue={2000}
+                    value={config.udpThreshold}
+                    onChange={(e) => handleConfigChange('udpThreshold', parseInt(e.target.value))}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
                   />
                </div>
@@ -147,19 +175,32 @@ const ThreatProtection: React.FC = () => {
          {/* Whitelist */}
          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h3 className="font-semibold text-slate-800 mb-4">{t('threat.whitelist')}</h3>
-            <div className="space-y-2 mb-4">
-               <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-100 text-sm">
-                  <span className="font-mono text-green-800">192.168.1.0/24</span>
-                  <button className="text-green-600 hover:text-green-800">&times;</button>
-               </div>
-               <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-100 text-sm">
-                  <span className="font-mono text-green-800">10.0.0.5</span>
-                  <button className="text-green-600 hover:text-green-800">&times;</button>
-               </div>
+            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto pr-1">
+               {config.whitelist.map(ip => (
+                   <div key={ip} className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-100 text-sm">
+                      <span className="font-mono text-green-800">{ip}</span>
+                      <button onClick={() => removeWhitelist(ip)} className="text-green-600 hover:text-green-800 font-bold">&times;</button>
+                   </div>
+               ))}
             </div>
-            <button className="w-full py-2 border border-dashed border-slate-300 rounded-lg text-slate-500 hover:bg-slate-50 text-sm">
-               {t('threat.add_ip')}
-            </button>
+            <div className="flex gap-2">
+                <input 
+                    type="text" 
+                    placeholder="10.0.0.1" 
+                    value={newIp}
+                    onChange={e => setNewIp(e.target.value)}
+                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+                />
+                <button 
+                    onClick={addWhitelist}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600"
+                >
+                    <Plus className="w-4 h-4" />
+                </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+               * Trusted IPs added to iptables allow list
+            </p>
          </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 export enum Role {
   SYSADMIN = 'sysadmin',
   SECADMIN = 'secadmin',
@@ -14,6 +15,7 @@ export enum View {
   FILE_CLEANING = 'file_cleaning',
   API_SETTINGS = 'api_settings',
   LOGS_AUDIT = 'logs_audit',
+  ADMIN_LOGS = 'admin_logs', // New View
   REPORTS = 'reports',
 }
 
@@ -25,10 +27,11 @@ export interface User {
 
 export interface LogEntry {
   id: number;
-  timestamp: string;
-  severity: 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
-  module: string;
-  message: string;
+  timestamp: string; // ISO String for better sorting/filtering
+  severity: 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+  module: 'AUTH' | 'CONFIG' | 'POLICY' | 'SYSTEM' | 'FILE' | 'VIDEO' | 'API' | 'THREAT';
+  messageKey: string; // Translation key
+  params?: Record<string, string | number>; // Dynamic params for translation
   sourceIp?: string;
   user?: string;
 }

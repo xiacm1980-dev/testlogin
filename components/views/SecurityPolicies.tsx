@@ -1,24 +1,50 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Filter, Search, MoreVertical, ToggleRight, ToggleLeft } from 'lucide-react';
-import { INITIAL_POLICIES } from '../../constants';
-import { PolicyRule } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Filter, Search, MoreVertical, ToggleRight, ToggleLeft, Shield, X, Save } from 'lucide-react';
+import { backend, PolicyRule } from '../../services/backend';
 import { useLanguage } from '../../i18n';
 
 const SecurityPolicies: React.FC = () => {
-  const [policies, setPolicies] = useState<PolicyRule[]>(INITIAL_POLICIES);
+  const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
   const { t } = useLanguage();
 
+  // New Policy Form State
+  const [newRule, setNewRule] = useState({
+    name: '', source: 'Any', destination: 'Any', service: 'Any', action: 'DENY' as 'DENY'|'ALLOW'
+  });
+
+  useEffect(() => {
+    // Initial fetch
+    setPolicies(backend.getPolicies());
+    // Poll to keep sync with backend stats (active rules count logic resides in backend but rules array is here)
+    const interval = setInterval(() => {
+      setPolicies(backend.getPolicies());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   const togglePolicy = (id: number) => {
-    setPolicies(policies.map(p => 
-      p.id === id ? { ...p, enabled: !p.enabled } : p
-    ));
+    backend.togglePolicy(id);
+    setPolicies(backend.getPolicies());
   };
 
   const deletePolicy = (id: number) => {
     if(window.confirm(t('policy.delete_confirm'))) {
-      setPolicies(policies.filter(p => p.id !== id));
+      backend.deletePolicy(id);
+      setPolicies(backend.getPolicies());
     }
+  };
+
+  const handleAddRule = () => {
+    if (!newRule.name) return;
+    backend.addPolicy({
+      ...newRule,
+      enabled: true
+    });
+    setShowAddModal(false);
+    setNewRule({ name: '', source: 'Any', destination: 'Any', service: 'Any', action: 'DENY' });
+    setPolicies(backend.getPolicies());
   };
 
   const filteredPolicies = policies.filter(p => 
@@ -33,7 +59,10 @@ const SecurityPolicies: React.FC = () => {
            <h2 className="text-2xl font-bold text-slate-900">{t('policy.title')}</h2>
            <p className="text-slate-500">{t('policy.subtitle')}</p>
         </div>
-        <button className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm"
+        >
           <Plus className="w-5 h-5" />
           {t('policy.add')}
         </button>
@@ -75,7 +104,7 @@ const SecurityPolicies: React.FC = () => {
               {filteredPolicies.map((policy) => (
                 <tr key={policy.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-6 py-4">
-                    <button onClick={() => togglePolicy(policy.id)} className="focus:outline-none">
+                    <button onClick={() => togglePolicy(policy.id)} className="focus:outline-none" title="Toggle firewalld rule">
                       {policy.enabled ? (
                         <ToggleRight className="w-8 h-8 text-emerald-500 transition-colors" />
                       ) : (
@@ -126,6 +155,92 @@ const SecurityPolicies: React.FC = () => {
           </div>
         )}
       </div>
+
+       {/* Add Rule Modal */}
+       {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative animate-in fade-in zoom-in duration-200">
+              <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-emerald-100 rounded-lg"><Shield className="w-6 h-6 text-emerald-600"/></div>
+                <h3 className="text-xl font-bold text-slate-900">{t('policy.add')}</h3>
+              </div>
+              
+              <div className="space-y-4">
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('policy.col.name')}</label>
+                    <input 
+                      type="text" 
+                      value={newRule.name} 
+                      onChange={e => setNewRule({...newRule, name: e.target.value})}
+                      placeholder="e.g. Block External SSH"
+                      className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                    />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('policy.col.source')}</label>
+                        <input 
+                            type="text" 
+                            value={newRule.source} 
+                            onChange={e => setNewRule({...newRule, source: e.target.value})}
+                            className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('policy.col.dest')}</label>
+                        <input 
+                            type="text" 
+                            value={newRule.destination} 
+                            onChange={e => setNewRule({...newRule, destination: e.target.value})}
+                            className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                        />
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('policy.col.service')}</label>
+                        <input 
+                            type="text" 
+                            value={newRule.service} 
+                            onChange={e => setNewRule({...newRule, service: e.target.value})}
+                            className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('policy.col.action')}</label>
+                        <select 
+                            value={newRule.action} 
+                            onChange={e => setNewRule({...newRule, action: e.target.value as 'ALLOW'|'DENY'})}
+                            className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none bg-white" 
+                        >
+                            <option value="ALLOW">{t('policy.allow')}</option>
+                            <option value="DENY">{t('policy.deny')}</option>
+                        </select>
+                    </div>
+                 </div>
+
+                 <div className="flex justify-end gap-3 mt-8">
+                    <button 
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button 
+                      onClick={handleAddRule}
+                      className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save to Firewalld
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,7 +11,8 @@ import {
   Video,
   FileScan,
   Globe,
-  Zap
+  Zap,
+  ClipboardList
 } from 'lucide-react';
 import { Role, View } from '../types';
 import { useLanguage } from '../i18n';
@@ -46,11 +47,13 @@ const Sidebar: React.FC<SidebarProps> = ({ role, currentView, onChangeView, onLo
           { id: View.THREAT_PROTECTION, label: t('menu.threat_protection'), icon: Zap },
           { id: View.VIDEO_CLEANING, label: t('menu.video_cleaning'), icon: Video },
           { id: View.FILE_CLEANING, label: t('menu.file_cleaning'), icon: FileScan },
+          { id: View.LOGS_AUDIT, label: t('menu.logs_audit'), icon: FileText },
         ];
       case Role.LOGADMIN:
         return [
           ...common,
           { id: View.LOGS_AUDIT, label: t('menu.logs_audit'), icon: FileText },
+          { id: View.ADMIN_LOGS, label: t('menu.admin_logs'), icon: ClipboardList },
           { id: View.REPORTS, label: t('menu.reports'), icon: BarChart3 },
         ];
       default:
