@@ -561,6 +561,11 @@ class BackendService {
       return admin ? admin.password === pass : false;
   }
 
+  public isDefaultAdminPassword(role: Role): boolean {
+      const admin = this.adminUsers.find(a => a.role === role);
+      return admin ? admin.password === '123456' : false;
+  }
+
   public changePassword(username: string, role: Role, oldPass: string, newPass: string): boolean {
       if (role === Role.USER) {
           const user = this.generalUsers.find(u => u.id === username);
