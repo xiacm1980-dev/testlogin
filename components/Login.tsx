@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Server, FileText, Lock, ArrowRight, Languages, User } from 'lucide-react';
+import { Shield, Server, FileText, Lock, ArrowRight, Languages, User, Trash2 } from 'lucide-react';
 import { Role } from '../types';
 import { ROLE_COLORS } from '../constants';
 import { useLanguage } from '../i18n';
@@ -48,6 +48,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setSelectedRole(null);
   }
 
+  const handleClearCache = () => {
+    if (confirm('确定要清除所有本地数据并重置为默认状态吗？\n\n这将：\n• 重置所有管理员密码为 123456\n• 清除所有用户数据\n• 删除所有历史记录\n\n操作后页面将自动刷新。')) {
+      // 清除所有aegis相关的localStorage
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('aegis_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      // 清除sessionStorage
+      sessionStorage.clear();
+      // 刷新页面
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Background decoration */}
@@ -56,7 +72,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="absolute top-6 right-6 z-20">
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+         <button
+            onClick={handleClearCache}
+            className="text-red-400 hover:text-red-300 transition-colors flex items-center gap-2 text-sm font-medium bg-red-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-red-500/20 hover:border-red-500/40"
+            title="清除本地缓存并重置"
+         >
+            <Trash2 className="w-4 h-4" /> 清除缓存
+         </button>
          <button
             onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
             className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm"

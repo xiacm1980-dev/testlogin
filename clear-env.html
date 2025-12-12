@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis CDR - 环境清理工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #4f46e5;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            color: #4f46e5;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .info-box ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        .info-box li {
+            color: #555;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .info-box li::before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .storage-info {
+            background: #fff7ed;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        .storage-info h4 {
+            color: #f59e0b;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #fed7aa;
+            font-size: 13px;
+            color: #666;
+        }
+        .storage-item:last-child {
+            border-bottom: none;
+        }
+        .storage-size {
+            font-weight: 600;
+            color: #ea580c;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-clear:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        .btn-reload {
+            background: #10b981;
+            color: white;
+        }
+        .btn-reload:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        .btn-cancel {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background: #4b5563;
+        }
+        .success-message {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .countdown {
+            font-size: 24px;
+            color: #ef4444;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 环境清理工具</h1>
+        <p class="subtitle">Aegis CDR System - Development Environment Reset</p>
+
+        <div class="info-box">
+            <h3>将要清理的数据：</h3>
+            <ul>
+                <li>所有管理员账户（重置为默认密码 123456）</li>
+                <li>所有普通用户数据</li>
+                <li>文件清洗任务历史</li>
+                <li>系统日志记录</li>
+                <li>安全策略配置</li>
+                <li>威胁防护配置</li>
+                <li>系统报告和备份</li>
+            </ul>
+        </div>
+
+        <div class="storage-info">
+            <h4>📦 当前 localStorage 占用：</h4>
+            <div id="storageList"></div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-clear" onclick="clearEnvironment()">🗑️ 清除并重启</button>
+            <button class="btn-cancel" onclick="window.close()">取消</button>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            ✅ 环境已清理！页面将在 <span class="countdown" id="countdown">3</span> 秒后跳转到登录页面...
+        </div>
+    </div>
+
+    <script>
+        // 显示localStorage占用情况
+        function displayStorageInfo() {
+            const storageList = document.getElementById('storageList');
+            const keys = Object.keys(localStorage).filter(k => k.startsWith('aegis_'));
+
+            if (keys.length === 0) {
+                storageList.innerHTML = '<div style="color: #10b981; padding: 10px;">✓ 数据已清空，环境干净</div>';
+                return;
+            }
+
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const size = new Blob([value]).size;
+                const sizeKB = (size / 1024).toFixed(2);
+
+                const item = document.createElement('div');
+                item.className = 'storage-item';
+                item.innerHTML = `
+                    <span>${key.replace('aegis_db_', '')}</span>
+                    <span class="storage-size">${sizeKB} KB</span>
+                `;
+                storageList.appendChild(item);
+            });
+        }
+
+        // 清理环境
+        function clearEnvironment() {
+            if (!confirm('⚠️ 确定要清除所有数据吗？\n\n此操作将：\n• 删除所有用户数据\n• 重置所有配置\n• 清空历史记录\n\n数据将无法恢复！')) {
+                return;
+            }
+
+            // 清除所有aegis相关的localStorage数据
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('aegis_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // 也清除session storage
+            sessionStorage.clear();
+
+            // 显示成功消息
+            document.getElementById('successMessage').classList.add('show');
+
+            // 倒计时跳转
+            let countdown = 3;
+            const countdownEl = document.getElementById('countdown');
+            const timer = setInterval(() => {
+                countdown--;
+                countdownEl.textContent = countdown;
+                if (countdown === 0) {
+                    clearInterval(timer);
+                    window.location.href = 'http://localhost:3000';
+                }
+            }, 1000);
+        }
+
+        // 页面加载时显示存储信息
+        displayStorageInfo();
+    </script>
+</body>
+</html>

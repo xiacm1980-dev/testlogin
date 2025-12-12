@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis CDR - 调试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .section {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #569cd6;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .admin-list, .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .admin-card, .user-card {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .role {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .password-hash {
+            color: #ce9178;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+        .test-button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-family: inherit;
+        }
+        .test-button:hover {
+            background: #1177bb;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .success {
+            background: #1e5631;
+            border: 1px solid #43915f;
+            color: #b5f5a0;
+        }
+        .error {
+            background: #5a1d1d;
+            border: 1px solid #be1100;
+            color: #f48771;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-reset {
+            background: #dc2626;
+        }
+        .btn-reset:hover {
+            background: #ef4444;
+        }
+        .btn-test-all {
+            background: #16a34a;
+        }
+        .btn-test-all:hover {
+            background: #22c55e;
+        }
+        pre {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            color: #d4d4d4;
+        }
+        .stat {
+            display: inline-block;
+            margin-right: 20px;
+            color: #dcdcaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Aegis CDR 调试工具</h1>
+
+        <div class="section">
+            <h2>📊 localStorage 统计</h2>
+            <div id="stats"></div>
+        </div>
+
+        <div class="section">
+            <h2>👨‍💼 管理员账户</h2>
+            <div id="adminList"></div>
+            <div class="action-buttons">
+                <button class="test-button btn-test-all" onclick="testAllAdmins()">🧪 测试所有管理员登录</button>
+                <button class="test-button btn-reset" onclick="resetAdmins()">🔄 重置管理员密码</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👥 普通用户账户</h2>
+            <div id="userList"></div>
+        </div>
+
+        <div class="section">
+            <h2>📝 原始数据</h2>
+            <button class="test-button" onclick="toggleRawData()">显示/隐藏原始JSON</button>
+            <pre id="rawData" style="display: none; margin-top: 15px;"></pre>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script>
+        // 加载并显示localStorage数据
+        function loadData() {
+            const admins = localStorage.getItem('aegis_db_admins');
+            const users = localStorage.getItem('aegis_db_users');
+
+            // 显示统计
+            const statsEl = document.getElementById('stats');
+            const keys = Object.keys(localStorage).filter(k => k.startsWith('aegis_'));
+            statsEl.innerHTML = `
+                <span class="stat">📦 总数据项: ${keys.length}</span>
+                <span class="stat">👨‍💼 管理员: ${admins ? JSON.parse(admins).length : 0}</span>
+                <span class="stat">👥 用户: ${users ? JSON.parse(users).length : 0}</span>
+            `;
+
+            // 显示管理员
+            if (admins) {
+                const adminData = JSON.parse(admins);
+                const adminListEl = document.getElementById('adminList');
+                adminListEl.innerHTML = adminData.map((admin, idx) => `
+                    <div class="admin-card">
+                        <div class="role">${admin.role.toUpperCase()}</div>
+                        <div style="color: #858585; font-size: 12px;">密码哈希:</div>
+                        <div class="password-hash">${admin.password}</div>
+                        <button class="test-button" onclick="testAdminLogin('${admin.role}', '123456')">
+                            🔐 测试默认密码 (123456)
+                        </button>
+                        <div id="result-${admin.role}"></div>
+                    </div>
+                `).join('');
+            }
+
+            // 显示普通用户
+            if (users) {
+                const userData = JSON.parse(users);
+                const userListEl = document.getElementById('userList');
+                if (userData.length === 0) {
+                    userListEl.innerHTML = '<div class="info">暂无普通用户</div>';
+                } else {
+                    userListEl.innerHTML = userData.map(user => `
+                        <div class="user-card">
+                            <div class="role">${user.id} - ${user.name}</div>
+                            <div style="color: #858585; font-size: 12px; margin-top: 8px;">
+                                单位: ${user.unit} | 部门: ${user.department}
+                            </div>
+                            <div style="color: #858585; font-size: 12px; margin-top: 5px;">密码哈希:</div>
+                            <div class="password-hash">${user.password}</div>
+                            <button class="test-button" onclick="testUserLogin('${user.id}', 'password')">
+                                🔐 测试默认密码 (password)
+                            </button>
+                            <div id="result-${user.id}"></div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // 显示原始数据
+            const rawDataEl = document.getElementById('rawData');
+            const allData = {};
+            keys.forEach(key => {
+                allData[key] = JSON.parse(localStorage.getItem(key));
+            });
+            rawDataEl.textContent = JSON.stringify(allData, null, 2);
+        }
+
+        // 测试管理员登录
+        function testAdminLogin(role, password) {
+            const resultEl = document.getElementById(`result-${role}`);
+            resultEl.innerHTML = '<div class="info">⏳ 测试中...</div>';
+
+            const admins = JSON.parse(localStorage.getItem('aegis_db_admins'));
+            const admin = admins.find(a => a.role === role);
+
+            if (!admin) {
+                resultEl.innerHTML = '<div class="error">❌ 找不到该管理员账户</div>';
+                return;
+            }
+
+            try {
+                const match = bcrypt.compareSync(password, admin.password);
+                if (match) {
+                    resultEl.innerHTML = `<div class="success">✅ 密码验证成功！可以使用 ${role} / ${password} 登录</div>`;
+                } else {
+                    resultEl.innerHTML = `<div class="error">❌ 密码验证失败！密码"${password}"不匹配<br><br>
+                        <strong>可能原因：</strong><br>
+                        1. localStorage中存储了修改后的密码<br>
+                        2. 需要重置管理员密码
+                    </div>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">❌ 验证出错: ${error.message}</div>`;
+            }
+        }
+
+        // 测试用户登录
+        function testUserLogin(userId, password) {
+            const resultEl = document.getElementById(`result-${userId}`);
+            resultEl.innerHTML = '<div class="info">⏳ 测试中...</div>';
+
+            const users = JSON.parse(localStorage.getItem('aegis_db_users'));
+            const user = users.find(u => u.id === userId);
+
+            if (!user) {
+                resultEl.innerHTML = '<div class="error">❌ 找不到该用户</div>';
+                return;
+            }
+
+            try {
+                const match = bcrypt.compareSync(password, user.password);
+                if (match) {
+                    resultEl.innerHTML = `<div class="success">✅ 密码验证成功！可以使用 ${userId} / ${password} 登录</div>`;
+                } else {
+                    resultEl.innerHTML = `<div class="error">❌ 密码验证失败！</div>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">❌ 验证出错: ${error.message}</div>`;
+            }
+        }
+
+        // 测试所有管理员
+        function testAllAdmins() {
+            const roles = ['sysadmin', 'secadmin', 'logadmin'];
+            roles.forEach(role => {
+                setTimeout(() => testAdminLogin(role, '123456'), 100);
+            });
+        }
+
+        // 重置管理员密码
+        function resetAdmins() {
+            if (!confirm('确定要重置所有管理员密码为 123456 吗？')) {
+                return;
+            }
+
+            const adminUsers = [
+                { role: 'sysadmin', password: bcrypt.hashSync('123456', 10) },
+                { role: 'secadmin', password: bcrypt.hashSync('123456', 10) },
+                { role: 'logadmin', password: bcrypt.hashSync('123456', 10) }
+            ];
+
+            localStorage.setItem('aegis_db_admins', JSON.stringify(adminUsers));
+            alert('✅ 管理员密码已重置！请刷新页面。');
+            location.reload();
+        }
+
+        // 切换原始数据显示
+        function toggleRawData() {
+            const rawDataEl = document.getElementById('rawData');
+            rawDataEl.style.display = rawDataEl.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 页面加载时执行
+        loadData();
+    </script>
+</body>
+</html>
