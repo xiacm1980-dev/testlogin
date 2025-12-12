@@ -82,13 +82,49 @@ export interface Report {
   content: string; // The text content of the report
 }
 
+export interface ArchiveFile {
+    id: string;
+    filename: string; // e.g., archive_2023_08.sqlite
+    month: string; // 2023-08
+    size: string;
+    createdAt: string;
+}
+
+export interface BackupFile {
+    id: string;
+    name: string;
+    createdAt: string;
+    size: string;
+    type: 'MANUAL' | 'AUTO';
+    data: string; // JSON string of the state
+}
+
+export interface NetworkConfig {
+    hostname: string;
+    ipAddress: string;
+    netmask: string;
+    gateway: string;
+    dns1: string;
+    ntpServer: string;
+}
+
+export interface LogConfig {
+    retentionDays: number;
+    diskCleanupThreshold: number; // Percentage (30%)
+    autoArchive: boolean;
+}
+
 const STORAGE_KEYS = {
   TASKS: 'aegis_db_tasks',
   THREATS: 'aegis_db_threats',
   POLICIES: 'aegis_db_policies',
   THREAT_CONFIG: 'aegis_db_threat_config',
   LOGS: 'aegis_db_logs',
-  REPORTS: 'aegis_db_reports'
+  REPORTS: 'aegis_db_reports',
+  ARCHIVES: 'aegis_db_archives',
+  BACKUPS: 'aegis_db_backups',
+  NET_CONFIG: 'aegis_db_net_config',
+  LOG_CONFIG: 'aegis_db_log_config'
 };
 
 // Singleton Mock Backend Class
@@ -97,6 +133,23 @@ class BackendService {
   private policies: PolicyRule[] = [];
   private logs: LogEntry[] = [];
   private reports: Report[] = [];
+  private archives: ArchiveFile[] = [];
+  private backups: BackupFile[] = [];
+  
+  private networkConfig: NetworkConfig = {
+      hostname: 'aegis-core-01',
+      ipAddress: '192.168.1.100',
+      netmask: '255.255.255.0',
+      gateway: '192.168.1.1',
+      dns1: '8.8.8.8',
+      ntpServer: 'pool.ntp.org'
+  };
+
+  private logConfig: LogConfig = {
+      retentionDays: 90,
+      diskCleanupThreshold: 30,
+      autoArchive: true
+  };
   
   private threatConfig: ThreatConfig = {
     synThreshold: 1000,
@@ -133,6 +186,7 @@ class BackendService {
 
   private intervalId: any = null;
   private videoLogCounter = 0;
+  private archiveCheckCounter = 0;
 
   constructor() {
     this.load();
@@ -146,6 +200,10 @@ class BackendService {
     const tc = localStorage.getItem(STORAGE_KEYS.THREAT_CONFIG);
     const l = localStorage.getItem(STORAGE_KEYS.LOGS);
     const r = localStorage.getItem(STORAGE_KEYS.REPORTS);
+    const a = localStorage.getItem(STORAGE_KEYS.ARCHIVES);
+    const b = localStorage.getItem(STORAGE_KEYS.BACKUPS);
+    const nc = localStorage.getItem(STORAGE_KEYS.NET_CONFIG);
+    const lc = localStorage.getItem(STORAGE_KEYS.LOG_CONFIG);
 
     if (t) this.tasks = JSON.parse(t);
     if (th) this.threats = { ...this.threats, ...JSON.parse(th) };
@@ -153,8 +211,12 @@ class BackendService {
     if (tc) this.threatConfig = JSON.parse(tc);
     if (l) this.logs = JSON.parse(l);
     if (r) this.reports = JSON.parse(r);
+    if (a) this.archives = JSON.parse(a);
+    if (b) this.backups = JSON.parse(b);
+    if (nc) this.networkConfig = JSON.parse(nc);
+    if (lc) this.logConfig = JSON.parse(lc);
 
-    // Seed defaults if empty
+    // Seed defaults
     if (this.tasks.length === 0) {
       this.tasks = [
         { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', sizeBytes: 2400000, status: 'CLEAN', type: 'DOC', progress: 100, currentStep: 'file.status.clean', submittedAt: '10:42 AM' },
@@ -168,26 +230,15 @@ class BackendService {
           { id: 2, name: 'Block Malicious IPs', source: 'Threat_Intel_List', destination: 'Any', service: 'Any', action: 'DENY', enabled: true },
           { id: 3, name: 'Allow DNS', source: 'Internal_LAN', destination: 'Any', service: 'DNS', action: 'ALLOW', enabled: true },
           { id: 4, name: 'Management Access', source: 'Mgmt_VLAN', destination: 'Local_Interface', service: 'SSH/HTTPS', action: 'ALLOW', enabled: true },
-          { id: 5, name: 'Block Legacy Protocols', source: 'Any', destination: 'Any', service: 'Telnet/FTP', action: 'DENY', enabled: false },
        ];
     }
-
-    if (this.logs.length === 0) {
-        this.log('SYSTEM', 'INFO', 'log.msg.system_start');
-        this.log('AUTH', 'INFO', 'log.msg.login_success', { user: 'sysadmin' }, undefined, 'sysadmin');
-    }
-
-    if (this.reports.length === 0) {
-        // Seed one report
-        this.reports.push({
-            id: 'R-20231001',
-            name: 'Security_Audit_Sept_2023',
-            type: 'AUDIT',
-            dateRange: '2023-09-01 - 2023-09-30',
-            generatedBy: 'System',
-            generatedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-            content: "SIMULATED HISTORICAL REPORT\n..."
-        });
+    
+    // Seed Archives if empty
+    if (this.archives.length === 0) {
+        this.archives = [
+            { id: 'arc_01', filename: 'aegis_logs_2023_08.sqlite', month: '2023-08', size: '450 MB', createdAt: '2023-09-01T00:00:00Z' },
+            { id: 'arc_02', filename: 'aegis_logs_2023_09.sqlite', month: '2023-09', size: '482 MB', createdAt: '2023-10-01T00:00:00Z' }
+        ];
     }
     
     this.save();
@@ -199,8 +250,12 @@ class BackendService {
     localStorage.setItem(STORAGE_KEYS.THREATS, JSON.stringify(this.threats));
     localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(this.policies));
     localStorage.setItem(STORAGE_KEYS.THREAT_CONFIG, JSON.stringify(this.threatConfig));
-    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(this.logs.slice(0, 500)));
+    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(this.logs.slice(0, 1000))); // Persist last 1000 logs
     localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(this.reports));
+    localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(this.archives));
+    localStorage.setItem(STORAGE_KEYS.BACKUPS, JSON.stringify(this.backups));
+    localStorage.setItem(STORAGE_KEYS.NET_CONFIG, JSON.stringify(this.networkConfig));
+    localStorage.setItem(STORAGE_KEYS.LOG_CONFIG, JSON.stringify(this.logConfig));
   }
 
   public log(module: LogEntry['module'], severity: LogEntry['severity'], messageKey: string, params?: Record<string, any>, sourceIp?: string, user?: string) {
@@ -215,148 +270,7 @@ class BackendService {
       user
     };
     this.logs.unshift(entry);
-    this.save();
-  }
-
-  // --- Report Generation Logic ---
-  public generateReport(type: 'AUDIT' | 'TRAFFIC' | 'COMPLIANCE', user: string, lang: 'en' | 'zh') {
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const dateRange = `${monthStart.toISOString().split('T')[0]} - ${now.toISOString().split('T')[0]}`;
-      const id = `R-${Date.now().toString().slice(-6)}`;
-      
-      let name = '';
-      let content = '';
-
-      if (type === 'AUDIT') {
-          name = `Security_Audit_${now.toISOString().slice(0,7)}`;
-          
-          // 1. File Clean Stats
-          const totalFiles = this.tasks.length;
-          const maliciousFiles = this.tasks.filter(t => t.status === 'MALICIOUS').length;
-          const maliciousDetails = this.tasks.filter(t => t.status === 'MALICIOUS').map(t => `- ${t.name}: Detected`).join('\n');
-          
-          // 2. Video Stats
-          const streams = this.threats.active_video_tasks;
-          const processedData = (streams * 24 * 60 * 5).toFixed(2); // Simulated MB
-          
-          // 3. API Stats
-          const apiCalls = this.logs.filter(l => l.module === 'API').length;
-          
-          // 4. Threat Stats
-          const threatLogs = this.logs.filter(l => l.module === 'THREAT');
-          const threatDetails = threatLogs.slice(0, 10).map(l => `- [${l.timestamp}] ${l.messageKey} ${l.params ? JSON.stringify(l.params) : ''}`).join('\n');
-
-          content = `
-==================================================
-      AEGIS MONTHLY SECURITY AUDIT REPORT
-==================================================
-Date Range: ${dateRange}
-Generated By: ${user}
-Language: ${lang}
-
-[1] FILE CLEANING AUDIT
---------------------------------------------------
-Total Files Processed: ${totalFiles}
-Threats Neutralized: ${maliciousFiles}
-Clean Rate: ${((totalFiles - maliciousFiles)/totalFiles * 100).toFixed(1)}%
-
-Critical Detections:
-${maliciousDetails || 'None'}
-
-[2] VIDEO STREAM SECURITY
---------------------------------------------------
-Active Streams: ${streams}
-Protocols: RTSP, ONVIF
-Total Data Processed (Est): ${processedData} GB
-Re-encoding Policy: H.264 -> YUV -> Noise -> H.264 (Active)
-
-[3] API INTERFACE USAGE
---------------------------------------------------
-Total Calls: ${apiCalls}
-Top Consumers: Internal_Web, Mobile_App
-Anomalies: 0
-
-[4] THREAT DEFENSE SUMMARY
---------------------------------------------------
-Total Attacks Blocked: ${this.threats.total_attacks}
-Malware Detected: ${this.threats.malware_detected}
-SYN Flood Mitigation: ${this.threats.mitigating ? 'Active' : 'Disabled'}
-Current Dropped Packets: ${this.threats.dropped}
-
-Recent Threat Events (Top 10):
-${threatDetails}
-          `;
-      } else if (type === 'TRAFFIC') {
-          name = `Traffic_Analysis_${now.toISOString().slice(0,7)}`;
-          
-          const totalBytes = this.tasks.reduce((acc, t) => acc + t.sizeBytes, 0);
-          const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
-          
-          content = `
-==================================================
-      AEGIS TRAFFIC ANALYSIS REPORT
-==================================================
-Date Range: ${dateRange}
-
-[1] FILE TRANSFER TRAFFIC (CDR)
---------------------------------------------------
-Total Volume: ${totalMB} MB
-File Count: ${this.tasks.length}
-Avg File Size: ${(totalBytes / (this.tasks.length || 1) / 1024).toFixed(2)} KB
-
-[2] VIDEO STREAMING BANDWIDTH
---------------------------------------------------
-Ingress Ports: 554, 8080, 8081
-Active Channels: ${this.threats.active_video_tasks}
-Est. Throughput: ${(this.threats.active_video_tasks * 4.5).toFixed(1)} Mbps
-          `;
-
-      } else if (type === 'COMPLIANCE') {
-          name = `Compliance_Log_${now.toISOString().slice(0,7)}`;
-          
-          const adminLogs = this.logs.filter(l => ['AUTH', 'CONFIG', 'POLICY'].includes(l.module));
-          const logDetails = adminLogs.slice(0, 20).map(l => `[${l.timestamp}] [${l.module}] ${l.user || 'System'}: ${l.messageKey}`).join('\n');
-          
-          content = `
-==================================================
-      AEGIS ADMINISTRATOR COMPLIANCE REPORT
-==================================================
-Date Range: ${dateRange}
-Generated By: ${user}
-
-[1] POLICY CONFIGURATION
---------------------------------------------------
-Active Firewall Rules: ${this.policies.filter(p => p.enabled).length}
-Inactive Rules: ${this.policies.filter(p => !p.enabled).length}
-Whitelisted IPs: ${this.threatConfig.whitelist.join(', ')}
-
-[2] ADMINISTRATOR ACTIONS
---------------------------------------------------
-Total Actions Recorded: ${adminLogs.length}
-
-Detailed Operation Log (Last 20):
-${logDetails}
-          `;
-      }
-
-      const newReport: Report = {
-          id,
-          name,
-          type,
-          dateRange,
-          generatedBy: user,
-          generatedAt: now.toISOString(),
-          content
-      };
-
-      this.reports.unshift(newReport);
-      this.save();
-      return newReport;
-  }
-
-  public getReports() {
-      return [...this.reports];
+    // Don't save on every log to prevent thrashing, relying on tick or specific actions
   }
 
   private startEngine() {
@@ -371,7 +285,19 @@ ${logDetails}
     this.system.cpu = Math.max(5, Math.min(100, this.system.cpu + (Math.random() * 10 - 5)));
     this.system.memory.used = Math.max(4, Math.min(30, this.system.memory.used + (Math.random() * 2 - 1)));
     
-    // 2. Threat Simulation
+    // Simulate disk usage increasing slightly over time
+    if (Math.random() > 0.95) {
+        this.system.disk.used = Math.min(99, this.system.disk.used + 0.1);
+    }
+    
+    // 2. Archiving Service (Run every ~10s in sim)
+    this.archiveCheckCounter++;
+    if (this.archiveCheckCounter > 10) {
+        this.archiveCheckCounter = 0;
+        this.runArchivingService();
+    }
+    
+    // 3. Threat Simulation
     if (this.threats.mitigating) {
       if (Math.random() > 0.8) {
          this.threats.pps = Math.max(1000, this.threats.pps + Math.floor(Math.random() * 500 - 250));
@@ -379,14 +305,13 @@ ${logDetails}
          const newDrops = Math.floor(this.threats.pps * dropRate * Math.random());
          this.threats.dropped += newDrops;
          
-         // Log SYN Flood occasionally
          if (this.threats.pps > this.threatConfig.synThreshold * 1.5 && Math.random() > 0.95) {
              this.log('THREAT', 'WARN', 'log.msg.threat_syn', { pps: this.threats.pps }, 'External');
          }
       }
     }
 
-    // 3. Firewall Simulation
+    // 4. Firewall Simulation
     if (Math.random() > 0.9) {
        const denyRules = this.policies.filter(p => p.enabled && p.action === 'DENY');
        if (denyRules.length > 0) {
@@ -396,22 +321,11 @@ ${logDetails}
        }
     }
     
-    // 4. API Simulation
-    if (Math.random() > 0.7) {
-        const methods = ['GET', 'POST'];
-        const endpoints = ['/api/v1/stats', '/api/v1/tasks', '/api/v1/health'];
-        this.log('API', 'INFO', 'log.msg.api_call', { 
-            method: methods[Math.floor(Math.random()*methods.length)], 
-            endpoint: endpoints[Math.floor(Math.random()*endpoints.length)] 
-        }, '192.168.1.105');
-    }
-
-    // 5. Video Cleaning Logs (Every 5 seconds in simulation ~ representing 5 minutes real time)
+    // 5. Video Cleaning Logs
     this.videoLogCounter++;
     if (this.videoLogCounter > 5) {
         this.videoLogCounter = 0;
         this.log('VIDEO', 'INFO', 'log.msg.video_stat', { port: 554, mb: (Math.random() * 50 + 10).toFixed(1) }, 'Video Daemon');
-        this.log('VIDEO', 'INFO', 'log.msg.video_stat', { port: 8080, mb: (Math.random() * 50 + 10).toFixed(1) }, 'Video Daemon');
     }
 
     // 6. File Tasks Simulation
@@ -427,6 +341,48 @@ ${logDetails}
     this.threats.active_file_tasks = activeFileTasksCount;
 
     if (tasksChanged || Math.random() > 0.7) this.save();
+  }
+
+  private runArchivingService() {
+      const now = new Date();
+      const cutoffDate = new Date();
+      cutoffDate.setDate(now.getDate() - this.logConfig.retentionDays);
+
+      // 1. Check for old logs
+      const oldLogs = this.logs.filter(l => new Date(l.timestamp) < cutoffDate);
+      
+      if (oldLogs.length > 0) {
+          // In a real system, we'd append to sqlite. Here we just create a fake archive file if it doesn't exist for that month
+          const monthKey = cutoffDate.toISOString().slice(0, 7); // YYYY-MM
+          const existingArchive = this.archives.find(a => a.month === monthKey);
+          
+          if (!existingArchive) {
+              this.archives.unshift({
+                  id: `arc_${Date.now()}`,
+                  filename: `aegis_logs_${monthKey.replace('-', '_')}.sqlite`,
+                  month: monthKey,
+                  size: '120 MB', // Mock size
+                  createdAt: new Date().toISOString()
+              });
+              this.log('SYSTEM', 'INFO', 'Archived logs for ' + monthKey);
+          }
+          
+          // Remove old logs from active memory
+          this.logs = this.logs.filter(l => new Date(l.timestamp) >= cutoffDate);
+      }
+
+      // 2. Check Disk Space Cleanup Strategy
+      const freeSpace = 100 - this.system.disk.used;
+      if (freeSpace < this.logConfig.diskCleanupThreshold && this.archives.length > 0) {
+          // Sort oldest first
+          const sortedArchives = [...this.archives].sort((a,b) => a.month.localeCompare(b.month));
+          const toDelete = sortedArchives[0];
+          
+          // Delete oldest
+          this.archives = this.archives.filter(a => a.id !== toDelete.id);
+          this.system.disk.used -= 5; // Simulate freeing space
+          this.log('SYSTEM', 'WARN', `Disk low (${freeSpace.toFixed(1)}%). Auto-deleted old archive: ${toDelete.filename}`);
+      }
   }
 
   private processTaskStep(task: Task) {
@@ -448,7 +404,6 @@ ${logDetails}
       task.status = isMalicious ? 'MALICIOUS' : 'CLEAN';
       task.currentStep = isMalicious ? 'file.status.malicious' : 'file.status.clean';
       task.completedAt = new Date().toLocaleTimeString();
-      
       if (isMalicious) { 
           this.threats.malware_detected += 1; 
           this.log('FILE', 'FATAL', 'log.msg.file_malware', { file: task.name }, 'Sandbox', 'System');
@@ -462,7 +417,109 @@ ${logDetails}
   public getSystemData() { return { system: { ...this.system }, threats: { ...this.threats } }; }
   public getTasks() { return [...this.tasks].sort((a, b) => new Date('1970/01/01 ' + b.submittedAt).getTime() - new Date('1970/01/01 ' + a.submittedAt).getTime()); }
   public getLogs() { return [...this.logs]; }
+  public getReports() { return [...this.reports]; }
 
+  public generateReport(type: 'AUDIT' | 'TRAFFIC' | 'COMPLIANCE', user: string, language: string) {
+      const id = `rep_${Date.now()}`;
+      let name = '';
+      let content = '';
+      const dateStr = new Date().toISOString().slice(0, 10);
+
+      switch(type) {
+          case 'AUDIT':
+              name = `Security_Audit_${dateStr}`;
+              content = `SECURITY AUDIT REPORT\nDate: ${dateStr}\nGenerated By: ${user}\nLanguage: ${language}\n\n1. Summary\nNo critical vulnerabilities found.\n\n2. User Activity\n...`;
+              break;
+          case 'TRAFFIC':
+              name = `Traffic_Analysis_${dateStr}`;
+              content = `TRAFFIC ANALYSIS REPORT\nDate: ${dateStr}\nGenerated By: ${user}\nLanguage: ${language}\n\n1. Bandwidth Usage\nPeak: 450 Mbps\nAverage: 120 Mbps\n...`;
+              break;
+          case 'COMPLIANCE':
+              name = `Compliance_Check_${dateStr}`;
+              content = `COMPLIANCE REPORT (ISO 27001)\nDate: ${dateStr}\nGenerated By: ${user}\nLanguage: ${language}\n\nStatus: COMPLIANT\n...`;
+              break;
+      }
+
+      const report: Report = {
+          id,
+          name,
+          type,
+          dateRange: 'Last 30 Days',
+          generatedBy: user,
+          generatedAt: new Date().toISOString(),
+          content
+      };
+
+      this.reports.unshift(report);
+      this.save();
+      return report;
+  }
+
+  // Network & Config Methods
+  public getNetworkConfig() { return { ...this.networkConfig }; }
+  public updateNetworkConfig(config: Partial<NetworkConfig>) {
+      this.networkConfig = { ...this.networkConfig, ...config };
+      this.log('CONFIG', 'WARN', 'log.msg.config_update', { user: 'sysadmin' }, 'Local', 'sysadmin');
+      this.save();
+      return this.networkConfig;
+  }
+  
+  public getLogConfig() { return { ...this.logConfig }; }
+  public updateLogConfig(config: Partial<LogConfig>) {
+      this.logConfig = { ...this.logConfig, ...config };
+      this.save();
+      return this.logConfig;
+  }
+  
+  public getArchives() { return [...this.archives]; }
+  
+  public getBackups() { return [...this.backups].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); }
+  
+  public createBackup() {
+      // Snapshot everything
+      const snapshot = {
+          tasks: this.tasks,
+          policies: this.policies,
+          network: this.networkConfig,
+          threatConfig: this.threatConfig
+      };
+      
+      const newBackup: BackupFile = {
+          id: `bkp_${Date.now()}`,
+          name: `aegis_full_backup_${new Date().toISOString().slice(0,10)}.zip`,
+          createdAt: new Date().toISOString(),
+          size: `${(JSON.stringify(snapshot).length / 1024).toFixed(1)} KB`,
+          type: 'MANUAL',
+          data: JSON.stringify(snapshot)
+      };
+      
+      this.backups.unshift(newBackup);
+      this.log('SYSTEM', 'INFO', 'log.msg.backup_create', { name: newBackup.name });
+      this.save();
+      return newBackup;
+  }
+  
+  public restoreBackup(id: string) {
+      const backup = this.backups.find(b => b.id === id);
+      if (backup) {
+          try {
+            const data = JSON.parse(backup.data);
+            if (data.tasks) this.tasks = data.tasks;
+            if (data.policies) this.policies = data.policies;
+            if (data.network) this.networkConfig = data.network;
+            if (data.threatConfig) this.threatConfig = data.threatConfig;
+            this.log('SYSTEM', 'WARN', `System restored from backup ${backup.name}`);
+            this.save();
+            return true;
+          } catch (e) {
+              console.error("Restore failed", e);
+              return false;
+          }
+      }
+      return false;
+  }
+
+  // --- Auth/Files/Other ---
   public loginUser(user: string, role: string) {
       this.log('AUTH', 'INFO', 'log.msg.login_success', { user }, undefined, user);
   }
@@ -487,7 +544,6 @@ ${logDetails}
     };
     this.tasks.unshift(newTask);
     this.save();
-    // No explicit log here, we wait for processing to finish or start, but we can log the upload event if needed.
   }
 
   private formatSize(bytes: number) {
