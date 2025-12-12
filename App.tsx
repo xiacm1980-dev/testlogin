@@ -84,7 +84,7 @@ const App: React.FC = () => {
         return user.role === Role.SECADMIN ? <VideoStream /> : <Unauthorized />;
       case View.FILE_CLEANING:
         // Both SecAdmin and General User can access File Cleaning
-        return (user.role === Role.SECADMIN || user.role === Role.USER) ? <FileCleaning currentUser={user.name} /> : <Unauthorized />;
+        return (user.role === Role.SECADMIN || user.role === Role.USER) ? <FileCleaning currentUser={user.name} role={user.role} /> : <Unauthorized />;
       case View.LOGS_AUDIT:
         return (user.role === Role.LOGADMIN || user.role === Role.SECADMIN) ? <LogAudit type="SYSTEM" /> : <Unauthorized />;
       case View.ADMIN_LOGS:
@@ -111,8 +111,15 @@ const App: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-6">
                    <div className="text-sm">
-                      <span className="text-slate-400">Welcome,</span> <span className="font-semibold">{user.name}</span>
+                      <span className="text-slate-400">{t('app.welcome')}</span> <span className="font-semibold">{user.name}</span>
                    </div>
+                   <button
+                     onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
+                     className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-xs font-medium"
+                   >
+                     <Languages className="w-4 h-4" /> {language === 'en' ? '中文' : 'English'}
+                   </button>
+                   <div className="h-4 w-px bg-slate-700"></div>
                    <button 
                       onClick={() => setShowPasswordModal(true)}
                       className="text-slate-300 hover:text-white text-sm flex items-center gap-1"

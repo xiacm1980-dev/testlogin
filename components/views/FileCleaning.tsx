@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film, Loader2, Download, User } from 'lucide-react';
+import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film, Loader2, Download, User, ArrowUp, ArrowDown } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 import { backend, Task } from '../../services/backend';
 import { Role } from '../../types';
 
 interface FileCleaningProps {
     currentUser?: string;
+    role?: Role;
 }
 
-const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
+const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser, role }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Task, direction: 'asc' | 'desc' }>({ key: 'submittedAt', direction: 'desc' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
@@ -43,20 +46,26 @@ const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
   };
 
   const handleFiles = (files: File[]) => {
-    // Upload each file to backend
     files.forEach(file => {
         backend.uploadFile(file, currentUser);
     });
   };
 
   const handleDownload = (fileName: string) => {
-      // Simulate download from backend (which would serve the cleaned file)
       const link = document.createElement('a');
       link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('Simulated Cleaned Content from Aegis Backend');
       link.download = `cleaned_${fileName}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+  };
+
+  const handleSort = (key: keyof Task) => {
+      let direction: 'asc' | 'desc' = 'asc';
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+      }
+      setSortConfig({ key, direction });
   };
 
   const getStatusBadge = (task: Task) => {
@@ -77,6 +86,45 @@ const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
       default: return null;
     }
   };
+
+  // Filter tasks based on Role and Current User
+  const filteredTasks = tasks.filter(task => {
+      // Security Admin sees all
+      if (role === Role.SECADMIN) {
+          return task.name.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+      // General User sees only their own
+      return (task.submittedBy === currentUser) && task.name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+  });
+
+  const SortIcon = ({ colKey }: { colKey: keyof Task }) => {
+      if (sortConfig.key !== colKey) return <ArrowDown className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-50" />;
+      return sortConfig.direction === 'asc' 
+        ? <ArrowUp className="w-3 h-3 text-blue-600" />
+        : <ArrowDown className="w-3 h-3 text-blue-600" />;
+  };
+
+  const Th = ({ colKey, label, className }: { colKey: keyof Task, label: string, className?: string }) => (
+      <th 
+        className={`px-6 py-3 font-medium cursor-pointer group select-none resize-x overflow-hidden ${className}`}
+        onClick={() => handleSort(colKey)}
+      >
+          <div className="flex items-center gap-1">
+              {label}
+              <SortIcon colKey={colKey} />
+          </div>
+      </th>
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -137,23 +185,29 @@ const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
             <h3 className="font-semibold text-slate-800">{t('file.recent')}</h3>
             <div className="relative">
                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-               <input type="text" placeholder={t('file.search')} className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" />
+               <input 
+                 type="text" 
+                 placeholder={t('file.search')} 
+                 value={searchTerm}
+                 onChange={e => setSearchTerm(e.target.value)}
+                 className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" 
+               />
             </div>
          </div>
-         <table className="w-full text-left text-sm">
+         <table className="w-full text-left text-sm table-auto">
             <thead className="bg-slate-50 text-slate-500">
                <tr>
-                  <th className="px-6 py-3 font-medium">{t('file.col.task')}</th>
-                  <th className="px-6 py-3 font-medium">{t('file.col.filename')}</th>
-                  <th className="px-6 py-3 font-medium">{t('file.col.submitted_by')}</th>
-                  <th className="px-6 py-3 font-medium">{t('file.col.size')}</th>
-                  <th className="px-6 py-3 font-medium">{t('file.col.status')}</th>
-                  <th className="px-6 py-3 font-medium">{t('file.col.submitted')}</th>
+                  <Th colKey="id" label={t('file.col.task')} />
+                  <Th colKey="name" label={t('file.col.filename')} />
+                  <Th colKey="submittedBy" label={t('file.col.submitted_by')} />
+                  <Th colKey="sizeBytes" label={t('file.col.size')} />
+                  <Th colKey="status" label={t('file.col.status')} />
+                  <Th colKey="submittedAt" label={t('file.col.submitted')} />
                   <th className="px-6 py-3 font-medium text-right"></th>
                </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-               {tasks.map((task) => (
+               {sortedTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-slate-50">
                      <td className="px-6 py-4 font-mono text-slate-500">{task.id}</td>
                      <td className="px-6 py-4 font-medium text-slate-800 flex items-center gap-2">
@@ -186,6 +240,9 @@ const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
                      </td>
                   </tr>
                ))}
+               {sortedTasks.length === 0 && (
+                   <tr><td colSpan={7} className="p-8 text-center text-slate-400">No tasks found.</td></tr>
+               )}
             </tbody>
          </table>
       </div>

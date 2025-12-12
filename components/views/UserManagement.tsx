@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Search, Edit2, User, Save, X } from 'lucide-react';
+import { Plus, Trash2, Search, Edit2, User, Save, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { backend } from '../../services/backend';
 import { GeneralUser } from '../../types';
 import { useLanguage } from '../../i18n';
@@ -9,6 +9,7 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<GeneralUser | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof GeneralUser, direction: 'asc' | 'desc' }>({ key: 'id', direction: 'asc' });
   const { t } = useLanguage();
 
   const [form, setForm] = useState({
@@ -63,9 +64,42 @@ const UserManagement: React.FC = () => {
     setShowModal(false);
   };
 
+  const handleSort = (key: keyof GeneralUser) => {
+      let direction: 'asc' | 'desc' = 'asc';
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+      }
+      setSortConfig({ key, direction });
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+  });
+
+  const SortIcon = ({ colKey }: { colKey: keyof GeneralUser }) => {
+      if (sortConfig.key !== colKey) return <ArrowDown className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-50" />;
+      return sortConfig.direction === 'asc' 
+        ? <ArrowUp className="w-3 h-3 text-blue-600" />
+        : <ArrowDown className="w-3 h-3 text-blue-600" />;
+  };
+
+  const Th = ({ colKey, label }: { colKey: keyof GeneralUser, label: string }) => (
+      <th 
+        className="px-6 py-3 font-medium cursor-pointer group select-none resize-x overflow-hidden"
+        onClick={() => handleSort(colKey)}
+      >
+          <div className="flex items-center gap-1">
+              {label}
+              <SortIcon colKey={colKey} />
+          </div>
+      </th>
   );
 
   return (
@@ -98,19 +132,19 @@ const UserManagement: React.FC = () => {
             </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm table-auto">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-6 py-3 font-medium">{t('user.id')}</th>
-                <th className="px-6 py-3 font-medium">{t('user.name')}</th>
-                <th className="px-6 py-3 font-medium">{t('user.unit')}</th>
-                <th className="px-6 py-3 font-medium">{t('user.dept')}</th>
-                <th className="px-6 py-3 font-medium">{t('user.contact')}</th>
+                <Th colKey="id" label={t('user.id')} />
+                <Th colKey="name" label={t('user.name')} />
+                <Th colKey="unit" label={t('user.unit')} />
+                <Th colKey="department" label={t('user.dept')} />
+                <Th colKey="contact" label={t('user.contact')} />
                 <th className="px-6 py-3 font-medium text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map(user => (
+              {sortedUsers.map(user => (
                 <tr key={user.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-mono text-slate-600">{user.id}</td>
                   <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
@@ -126,7 +160,7 @@ const UserManagement: React.FC = () => {
                   </td>
                 </tr>
               ))}
-              {filteredUsers.length === 0 && (
+              {sortedUsers.length === 0 && (
                  <tr><td colSpan={6} className="p-8 text-center text-slate-400">No users found</td></tr>
               )}
             </tbody>

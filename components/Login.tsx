@@ -10,8 +10,8 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [activeTab, setActiveTab] = useState<'admin' | 'user'>('admin');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [isGeneralUser, setIsGeneralUser] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,10 +38,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    setIsGeneralUser(false);
     setError('');
     setPassword('');
   };
+
+  const switchTab = (tab: 'admin' | 'user') => {
+      setActiveTab(tab);
+      setError('');
+      setPassword('');
+      setUsername('');
+      setSelectedRole(null);
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden">
@@ -60,7 +67,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
          </button>
       </div>
 
-      <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-2xl shadow-2xl max-w-4xl w-full z-10 transition-all">
+      <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-2xl shadow-2xl max-w-4xl w-full z-10 transition-all flex flex-col">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 mb-6 shadow-lg border border-slate-700">
             <Shield className="w-10 h-10 text-blue-400" />
@@ -69,63 +76,109 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <p className="text-slate-400 text-lg">{t('app.subtitle')}</p>
         </div>
 
-        {!selectedRole && !isGeneralUser ? (
-          <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-8">
-            {/* SysAdmin Card */}
-            <button
-              onClick={() => handleRoleSelect(Role.SYSADMIN)}
-              className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-blue-600/10 border border-slate-700 hover:border-blue-500 rounded-xl transition-all duration-300 hover:scale-105"
+        {/* Tab Switcher */}
+        <div className="flex bg-slate-800/50 p-1 rounded-xl mb-8 mx-auto max-w-md w-full border border-slate-700">
+            <button 
+                onClick={() => switchTab('admin')}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'admin' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
             >
-              <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.SYSADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-blue-500/50 transition-all`}>
-                <Server className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.SYSADMIN}`)}</h3>
-              <p className="text-sm text-slate-400 text-center">
-                {t('role.desc.sysadmin')}
-              </p>
+                {t('login.tab_admin')}
             </button>
+            <button 
+                onClick={() => switchTab('user')}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'user' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+                {t('login.tab_user')}
+            </button>
+        </div>
 
-            {/* SecAdmin Card */}
-            <button
-              onClick={() => handleRoleSelect(Role.SECADMIN)}
-              className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-emerald-600/10 border border-slate-700 hover:border-emerald-500 rounded-xl transition-all duration-300 hover:scale-105"
-            >
-              <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.SECADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-emerald-500/50 transition-all`}>
-                <Lock className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.SECADMIN}`)}</h3>
-              <p className="text-sm text-slate-400 text-center">
-                {t('role.desc.secadmin')}
-              </p>
-            </button>
+        {activeTab === 'admin' ? (
+            !selectedRole ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <button
+                    onClick={() => handleRoleSelect(Role.SYSADMIN)}
+                    className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-blue-600/10 border border-slate-700 hover:border-blue-500 rounded-xl transition-all duration-300 hover:scale-105"
+                    >
+                    <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.SYSADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-blue-500/50 transition-all`}>
+                        <Server className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.SYSADMIN}`)}</h3>
+                    <p className="text-sm text-slate-400 text-center">
+                        {t('role.desc.sysadmin')}
+                    </p>
+                    </button>
 
-            {/* LogAdmin Card */}
-            <button
-              onClick={() => handleRoleSelect(Role.LOGADMIN)}
-              className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-amber-600/10 border border-slate-700 hover:border-amber-500 rounded-xl transition-all duration-300 hover:scale-105"
-            >
-              <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.LOGADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-amber-500/50 transition-all`}>
-                <FileText className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.LOGADMIN}`)}</h3>
-              <p className="text-sm text-slate-400 text-center">
-                {t('role.desc.logadmin')}
-              </p>
-            </button>
-          </div>
-          
-          <div className="text-center">
-             <button 
-                onClick={() => { setIsGeneralUser(true); setError(''); setPassword(''); setUsername(''); }}
-                className="text-slate-400 hover:text-white underline decoration-slate-600 hover:decoration-white transition-all text-sm"
-             >
-                Login as General User
-             </button>
-          </div>
-          </>
-        ) : isGeneralUser ? (
-             <div className="max-w-md mx-auto bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
+                    <button
+                    onClick={() => handleRoleSelect(Role.SECADMIN)}
+                    className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-emerald-600/10 border border-slate-700 hover:border-emerald-500 rounded-xl transition-all duration-300 hover:scale-105"
+                    >
+                    <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.SECADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-emerald-500/50 transition-all`}>
+                        <Lock className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.SECADMIN}`)}</h3>
+                    <p className="text-sm text-slate-400 text-center">
+                        {t('role.desc.secadmin')}
+                    </p>
+                    </button>
+
+                    <button
+                    onClick={() => handleRoleSelect(Role.LOGADMIN)}
+                    className="group relative flex flex-col items-center p-8 bg-slate-800/50 hover:bg-amber-600/10 border border-slate-700 hover:border-amber-500 rounded-xl transition-all duration-300 hover:scale-105"
+                    >
+                    <div className={`w-14 h-14 rounded-lg ${ROLE_COLORS[Role.LOGADMIN]} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-amber-500/50 transition-all`}>
+                        <FileText className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">{t(`role.${Role.LOGADMIN}`)}</h3>
+                    <p className="text-sm text-slate-400 text-center">
+                        {t('role.desc.logadmin')}
+                    </p>
+                    </button>
+                </div>
+            ) : (
+                <div className="max-w-md mx-auto w-full bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
+                    <h3 className="text-xl text-white font-semibold mb-6 text-center">
+                    {t('login.title')} <span className="text-blue-400">{t(`role.${selectedRole}`)}</span>
+                    </h3>
+                    
+                    <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">{t('login.password')}</label>
+                        <input 
+                        type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+                        placeholder={t('login.placeholder')}
+                        className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        autoFocus
+                        />
+                    </div>
+                    
+                    {error && (
+                        <div className="text-red-400 text-sm bg-red-400/10 p-2 rounded">
+                        {error}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-6">
+                        <button 
+                        onClick={() => setSelectedRole(null)}
+                        className="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                        {t('login.back')}
+                        </button>
+                        <button 
+                        onClick={handleAdminLogin}
+                        className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                        >
+                        {t('login.button')} <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            )
+        ) : (
+             <div className="max-w-md mx-auto w-full bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
                 <div className="text-center mb-6">
                    <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
                       <User className="w-6 h-6 text-slate-300" />
@@ -140,7 +193,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       type="text" 
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter username"
+                      placeholder={t('login.username')}
                       className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
@@ -151,7 +204,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleGeneralLogin()}
-                      placeholder="Enter password"
+                      placeholder={t('login.password')}
                       className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
@@ -162,64 +215,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </div>
                   )}
 
-                  <div className="flex gap-3 mt-6">
-                    <button 
-                      onClick={() => setIsGeneralUser(false)}
-                      className="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                      {t('login.back')}
-                    </button>
+                  <div className="mt-6">
                     <button 
                       onClick={handleGeneralLogin}
-                      className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                      className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
                     >
                       {t('login.button')} <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
              </div>
-        ) : (
-          <div className="max-w-md mx-auto bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
-            <h3 className="text-xl text-white font-semibold mb-6 text-center">
-              {t('login.title')} <span className="text-blue-400">{t(`role.${selectedRole}`)}</span>
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">{t('login.password')}</label>
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
-                  placeholder={t('login.placeholder')}
-                  className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  autoFocus
-                />
-              </div>
-              
-              {error && (
-                <div className="text-red-400 text-sm bg-red-400/10 p-2 rounded">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3 mt-6">
-                <button 
-                  onClick={() => setSelectedRole(null)}
-                  className="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  {t('login.back')}
-                </button>
-                <button 
-                  onClick={handleAdminLogin}
-                  className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                >
-                  {t('login.button')} <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
         )}
 
         <div className="mt-12 text-center text-slate-500 text-sm">

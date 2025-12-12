@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, AlertTriangle, Info, XCircle, AlertOctagon, Filter, X } from 'lucide-react';
+import { Search, Download, AlertTriangle, Info, XCircle, AlertOctagon, Filter, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { backend, LogEntry } from '../../services/backend';
 import { useLanguage } from '../../i18n';
 
@@ -12,6 +12,7 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [showExport, setShowExport] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof LogEntry, direction: 'asc' | 'desc' }>({ key: 'timestamp', direction: 'desc' });
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -21,6 +22,14 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
      }, 2000);
      return () => clearInterval(interval);
   }, []);
+
+  const handleSort = (key: keyof LogEntry) => {
+      let direction: 'asc' | 'desc' = 'asc';
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+      }
+      setSortConfig({ key, direction });
+  };
 
   const getSeverityIcon = (severity: string) => {
     switch(severity) {
@@ -61,6 +70,16 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
     return matchesFilter && matchesSearch;
   });
 
+  const sortedLogs = [...filteredLogs].sort((a, b) => {
+      if (a[sortConfig.key]! < b[sortConfig.key]!) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key]! > b[sortConfig.key]!) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+  });
+
   const handleExport = (period: string) => {
       const now = new Date();
       let cutoff = new Date(0); // Default all time
@@ -69,7 +88,7 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
       else if (period === '24h') cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       else if (period === '7d') cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       
-      const exportData = filteredLogs.filter(l => new Date(l.timestamp) >= cutoff);
+      const exportData = sortedLogs.filter(l => new Date(l.timestamp) >= cutoff);
 
       const headers = ['Timestamp', 'Severity', 'Module', 'Message', 'Source/User'];
       const rows = exportData.map(l => [
@@ -95,6 +114,25 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
       document.body.removeChild(link);
       setShowExport(false);
   };
+
+  const SortIcon = ({ colKey }: { colKey: keyof LogEntry }) => {
+      if (sortConfig.key !== colKey) return <ArrowDown className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-50" />;
+      return sortConfig.direction === 'asc' 
+        ? <ArrowUp className="w-3 h-3 text-blue-600" />
+        : <ArrowDown className="w-3 h-3 text-blue-600" />;
+  };
+
+  const Th = ({ colKey, label, className }: { colKey: keyof LogEntry, label: string, className?: string }) => (
+      <th 
+        className={`px-6 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer group select-none resize-x overflow-hidden ${className}`}
+        onClick={() => handleSort(colKey)}
+      >
+          <div className="flex items-center gap-1">
+              {label}
+              <SortIcon colKey={colKey} />
+          </div>
+      </th>
+  );
 
   return (
     <div className="space-y-6">
@@ -142,31 +180,30 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-auto">
             <thead>
-               <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <th className="px-6 py-3 font-semibold w-40">{t('log.col.time')}</th>
-                {/* Widen the Severity Column */}
-                <th className="px-6 py-3 font-semibold min-w-[120px]">{t('log.col.severity')}</th>
-                <th className="px-6 py-3 font-semibold w-24">{t('log.col.module')}</th>
-                <th className="px-6 py-3 font-semibold">{t('log.col.message')}</th>
-                <th className="px-6 py-3 font-semibold w-40">{t('log.col.source')}</th>
+               <tr className="bg-slate-50 text-slate-500">
+                <Th colKey="timestamp" label={t('log.col.time')} className="min-w-[150px]"/>
+                <Th colKey="severity" label={t('log.col.severity')} className="w-24 min-w-[90px]"/>
+                <Th colKey="module" label={t('log.col.module')} className="w-24"/>
+                <Th colKey="messageKey" label={t('log.col.message')} className="min-w-[300px]"/>
+                <Th colKey="sourceIp" label={t('log.col.source')} className="w-40"/>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredLogs.map((log) => (
+              {sortedLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-slate-500 text-xs">
+                  <td className="px-6 py-4 font-mono text-slate-500 text-xs whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getSeverityClass(log.severity)} whitespace-nowrap`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${getSeverityClass(log.severity)} whitespace-nowrap`}>
                       {getSeverityIcon(log.severity)}
                       {t(`log.level.${log.severity.toLowerCase()}`)}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-700">{log.module}</td>
-                  <td className="px-6 py-4 text-slate-800">
+                  <td className="px-6 py-4 text-slate-800 break-words max-w-lg">
                       {t(log.messageKey, log.params)}
                   </td>
                   <td className="px-6 py-4 text-slate-500 font-mono text-xs">
@@ -180,7 +217,7 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
               ))}
             </tbody>
           </table>
-          {filteredLogs.length === 0 && (
+          {sortedLogs.length === 0 && (
             <div className="p-8 text-center text-slate-400">{t('log.empty')}</div>
           )}
         </div>

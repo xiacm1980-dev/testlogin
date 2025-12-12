@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Filter, Search, MoreVertical, ToggleRight, ToggleLeft, Shield, X, Save } from 'lucide-react';
+import { Plus, Trash2, Filter, Search, MoreVertical, ToggleRight, ToggleLeft, Shield, X, Save, ArrowUp, ArrowDown } from 'lucide-react';
 import { backend, PolicyRule } from '../../services/backend';
 import { useLanguage } from '../../i18n';
 
@@ -7,6 +7,7 @@ const SecurityPolicies: React.FC = () => {
   const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof PolicyRule, direction: 'asc' | 'desc' }>({ key: 'id', direction: 'asc' });
   const { t } = useLanguage();
 
   // New Policy Form State
@@ -47,9 +48,42 @@ const SecurityPolicies: React.FC = () => {
     setPolicies(backend.getPolicies());
   };
 
+  const handleSort = (key: keyof PolicyRule) => {
+      let direction: 'asc' | 'desc' = 'asc';
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+      }
+      setSortConfig({ key, direction });
+  };
+
   const filteredPolicies = policies.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.service.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const sortedPolicies = [...filteredPolicies].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+  });
+
+  const SortIcon = ({ colKey }: { colKey: keyof PolicyRule }) => {
+      if (sortConfig.key !== colKey) return <ArrowDown className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-50" />;
+      return sortConfig.direction === 'asc' 
+        ? <ArrowUp className="w-3 h-3 text-emerald-600" />
+        : <ArrowDown className="w-3 h-3 text-emerald-600" />;
+  };
+
+  const Th = ({ colKey, label }: { colKey: keyof PolicyRule, label: string }) => (
+      <th 
+        className="px-6 py-4 font-semibold cursor-pointer group select-none resize-x overflow-hidden"
+        onClick={() => handleSort(colKey)}
+      >
+          <div className="flex items-center gap-1">
+              {label}
+              <SortIcon colKey={colKey} />
+          </div>
+      </th>
   );
 
   return (
@@ -87,21 +121,21 @@ const SecurityPolicies: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-auto">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <th className="px-6 py-4 font-semibold">{t('policy.col.status')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.id')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.name')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.source')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.dest')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.service')}</th>
-                <th className="px-6 py-4 font-semibold">{t('policy.col.action')}</th>
+                <Th colKey="enabled" label={t('policy.col.status')} />
+                <Th colKey="id" label={t('policy.col.id')} />
+                <Th colKey="name" label={t('policy.col.name')} />
+                <Th colKey="source" label={t('policy.col.source')} />
+                <Th colKey="destination" label={t('policy.col.dest')} />
+                <Th colKey="service" label={t('policy.col.service')} />
+                <Th colKey="action" label={t('policy.col.action')} />
                 <th className="px-6 py-4 font-semibold text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredPolicies.map((policy) => (
+              {sortedPolicies.map((policy) => (
                 <tr key={policy.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-6 py-4">
                     <button onClick={() => togglePolicy(policy.id)} className="focus:outline-none" title="Toggle firewalld rule">
@@ -149,7 +183,7 @@ const SecurityPolicies: React.FC = () => {
             </tbody>
           </table>
         </div>
-        {filteredPolicies.length === 0 && (
+        {sortedPolicies.length === 0 && (
           <div className="p-12 text-center text-slate-400">
             {t('policy.empty')}
           </div>

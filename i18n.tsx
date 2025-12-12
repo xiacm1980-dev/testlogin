@@ -7,9 +7,12 @@ const translations = {
     'app.title': 'Aegis CDR System',
     'app.subtitle': 'Deep Content Disarm & Reconstruction',
     'app.footer': '© 2024 Aegis Security. C++ High Performance Engine.',
+    'app.welcome': 'Welcome,',
     
     // Login
     'login.title': 'Login as',
+    'login.tab_admin': 'Administrator Login',
+    'login.tab_user': 'General User Login',
     'login.general_title': 'General User Login',
     'login.username': 'Username',
     'login.password': 'Password',
@@ -244,7 +247,7 @@ const translations = {
     'file.col.submitted': 'Submitted',
     'file.col.submitted_by': 'Submitted By',
     'file.status.clean': 'Sanitized',
-    'file.status.malicious': '已净化',
+    'file.status.malicious': 'Threat Removed',
     'file.status.scanning': 'Processing...',
     'file.download': 'Download Clean',
     'file.view_report': 'View Report',
@@ -300,9 +303,12 @@ const translations = {
     'app.title': 'Aegis CDR 系统',
     'app.subtitle': '深度内容清洗与重构系统',
     'app.footer': '© 2024 Aegis Security. C++ 高性能引擎.',
+    'app.welcome': '欢迎，',
     
     // Login
     'login.title': '登录身份',
+    'login.tab_admin': '管理员登录',
+    'login.tab_user': '一般用户登录',
     'login.general_title': '一般用户登录',
     'login.username': '用户名',
     'login.password': '密码',
