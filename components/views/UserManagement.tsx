@@ -33,7 +33,7 @@ const UserManagement: React.FC = () => {
     setForm({
       id: user.id,
       name: user.name,
-      password: user.password,
+      password: '', // Empty password means "keep existing password"
       unit: user.unit,
       department: user.department,
       contact: user.contact
@@ -48,10 +48,20 @@ const UserManagement: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    if (!form.id || !form.name || !form.password) return;
+    // Validation
+    if (!form.id || !form.name) {
+      toast.error(t('user.id') + ' and ' + t('user.name') + ' are required');
+      return;
+    }
 
-    // Validate password strength only for new users or if password changed
-    if (!editingUser || form.password !== editingUser.password) {
+    // For new users, password is required
+    if (!editingUser && !form.password) {
+      toast.error(t('login.password') + ' is required for new users');
+      return;
+    }
+
+    // Validate password strength only if password is being set/changed
+    if (form.password && form.password.trim() !== '') {
         const validation = backend.validatePasswordStrength(form.password);
         if (!validation.valid) {
             toast.error(t(validation.error || 'Invalid password'));
@@ -61,13 +71,17 @@ const UserManagement: React.FC = () => {
 
     const userData: GeneralUser = {
       ...form,
+      // If editing and password is empty, keep the old password
+      password: (editingUser && !form.password) ? editingUser.password : form.password,
       createdAt: editingUser ? editingUser.createdAt : new Date().toISOString()
     };
 
     if (editingUser) {
       backend.updateGeneralUser(userData);
+      toast.success(t('user.updated'));
     } else {
       backend.addGeneralUser(userData);
+      toast.success(t('user.added'));
     }
 
     setUsers(backend.getGeneralUsers());
@@ -207,13 +221,23 @@ const UserManagement: React.FC = () => {
                     />
                  </div>
                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.password')}</label>
-                    <input 
-                      type="text" 
-                      value={form.password} 
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      {t('login.password')}
+                      {editingUser && <span className="text-slate-400 text-xs ml-2">(Leave empty to keep current password)</span>}
+                      {!editingUser && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    <input
+                      type="password"
+                      value={form.password}
                       onChange={e => setForm({...form, password: e.target.value})}
-                      className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono" 
+                      placeholder={editingUser ? "Enter new password or leave empty" : "Enter password"}
+                      className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
+                    {!editingUser && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        At least 8 characters, including uppercase, lowercase, and numbers
+                      </p>
+                    )}
                  </div>
                  <div className="col-span-2 sm:col-span-1">
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.unit')}</label>
