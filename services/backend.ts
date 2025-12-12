@@ -132,14 +132,17 @@ class BackendService {
     if (u) this.generalUsers = JSON.parse(u);
     if (ad) this.adminUsers = JSON.parse(ad);
 
-    // Seed defaults
+    // Seed defaults only if localStorage is empty (first run)
+    let needsSave = false;
+
     if (this.tasks.length === 0) {
       this.tasks = [
         { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', sizeBytes: 2400000, status: 'CLEAN', type: 'DOC', progress: 100, currentStep: 'file.status.clean', submittedAt: '10:42 AM', submittedBy: 'System' },
         { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', sizeBytes: 5100000, status: 'MALICIOUS', type: 'IMG', progress: 100, currentStep: 'file.status.malicious', submittedAt: '10:45 AM', submittedBy: 'System' }
       ];
+      needsSave = true;
     }
-    
+
     if (this.policies.length === 0) {
        this.policies = [
           { id: 1, name: 'Allow Web Traffic', source: 'Any', destination: 'Web_Server_DMZ', service: 'HTTP/HTTPS', action: 'ALLOW', enabled: true },
@@ -147,12 +150,14 @@ class BackendService {
           { id: 3, name: 'Allow DNS', source: 'Internal_LAN', destination: 'Any', service: 'DNS', action: 'ALLOW', enabled: true },
           { id: 4, name: 'Management Access', source: 'Mgmt_VLAN', destination: 'Local_Interface', service: 'SSH/HTTPS', action: 'ALLOW', enabled: true },
        ];
+       needsSave = true;
     }
-    
+
     if (this.generalUsers.length === 0) {
         this.generalUsers = [
             { id: 'user01', name: 'John Doe', password: bcrypt.hashSync('password', 10), unit: 'Headquarters', department: 'Finance', contact: '555-0101', createdAt: new Date().toISOString() }
         ];
+        needsSave = true;
     }
 
     if (this.adminUsers.length === 0) {
@@ -161,9 +166,13 @@ class BackendService {
             { role: Role.SECADMIN, password: bcrypt.hashSync('123456', 10) },
             { role: Role.LOGADMIN, password: bcrypt.hashSync('123456', 10) }
         ];
+        needsSave = true;
     }
-    
-    this.save();
+
+    // Only save if we initialized defaults
+    if (needsSave) {
+      this.save();
+    }
   }
 
   private save() {
