@@ -10,16 +10,20 @@ const translations = {
     
     // Login
     'login.title': 'Login as',
+    'login.general_title': 'General User Login',
+    'login.username': 'Username',
     'login.password': 'Password',
     'login.placeholder': 'Enter password (default: 123456)',
     'login.back': 'Back',
     'login.button': 'Login',
     'login.error': 'Invalid password. Default is 123456',
+    'login.invalid_creds': 'Invalid username or password.',
     
     // Roles
     'role.sysadmin': 'System Administrator',
     'role.secadmin': 'Security Administrator',
     'role.logadmin': 'Log Audit Administrator',
+    'role.user': 'General User',
     'role.desc.sysadmin': 'System status (SQLite), Backup, API Config.',
     'role.desc.secadmin': 'Deep Cleaning Policies, Stream Re-encoding.',
     'role.desc.logadmin': 'Log Audit, Reports & Statistical Analysis.',
@@ -37,6 +41,18 @@ const translations = {
     'menu.admin_logs': 'Admin Operation Logs',
     'menu.reports': 'Reports & Analysis',
     'menu.signout': 'Sign Out',
+    
+    // User Management
+    'user.add': 'Add User',
+    'user.edit': 'Edit User',
+    'user.search': 'Search users...',
+    'user.id': 'User ID',
+    'user.name': 'Name',
+    'user.unit': 'Unit',
+    'user.dept': 'Department',
+    'user.contact': 'Contact',
+    'user.subtitle': 'Manage general user accounts and access.',
+    'user.delete_confirm': 'Are you sure you want to delete this user?',
 
     // Dashboard
     'dash.system_dashboard': 'System Dashboard',
@@ -226,6 +242,7 @@ const translations = {
     'file.col.size': 'Size',
     'file.col.status': 'Status',
     'file.col.submitted': 'Submitted',
+    'file.col.submitted_by': 'Submitted By',
     'file.status.clean': 'Sanitized',
     'file.status.malicious': '已净化',
     'file.status.scanning': 'Processing...',
@@ -238,18 +255,6 @@ const translations = {
     'file.rule.av': 'A/V CDR',
     'file.rule.av_desc': 'Decode H264/YUV, Frame Compress, Add White Noise, Re-encode.',
     
-    // File Processing Steps
-    'file.step.uploading': 'Uploading...',
-    'file.step.doc_convert': 'Converting to PDF...',
-    'file.step.doc_strip': 'Stripping Macros/Scripts...',
-    'file.step.img_rotate': 'Rotating 90° (4x)...',
-    'file.step.img_sharpen': 'Sharpening & Resizing...',
-    'file.step.img_convert': 'Converting to PNG...',
-    'file.step.av_decode': 'Decoding H.264/Audio...',
-    'file.step.av_noise': 'Injecting White Noise...',
-    'file.step.av_compress': 'Compressing Frame Rate...',
-    'file.step.av_encode': 'Re-encoding to H.264/MP3...',
-
     // API Settings
     'api.title': 'API Interface Settings',
     'api.subtitle': 'Manage Sync/Async CDR interfaces.',
@@ -298,16 +303,20 @@ const translations = {
     
     // Login
     'login.title': '登录身份',
+    'login.general_title': '一般用户登录',
+    'login.username': '用户名',
     'login.password': '密码',
     'login.placeholder': '输入密码 (默认: 123456)',
     'login.back': '返回',
     'login.button': '登录',
     'login.error': '密码错误。默认密码为 123456',
+    'login.invalid_creds': '用户名或密码错误。',
     
     // Roles
     'role.sysadmin': '系统管理员',
     'role.secadmin': '安全管理员',
     'role.logadmin': '审计管理员',
+    'role.user': '一般用户',
     'role.desc.sysadmin': '系统状态 (SQLite), 备份/恢复, API配置',
     'role.desc.secadmin': '深度清洗策略, 流媒体重编码',
     'role.desc.logadmin': '日志审计, 报表与统计分析',
@@ -325,6 +334,18 @@ const translations = {
     'menu.admin_logs': '管理员日志',
     'menu.reports': '报表分析',
     'menu.signout': '退出登录',
+    
+    // User Management
+    'user.add': '添加用户',
+    'user.edit': '编辑用户',
+    'user.search': '搜索用户...',
+    'user.id': '用户ID',
+    'user.name': '姓名',
+    'user.unit': '单位',
+    'user.dept': '部门',
+    'user.contact': '联系方式',
+    'user.subtitle': '管理一般用户账号和权限。',
+    'user.delete_confirm': '确定要删除此用户吗？',
 
     // Dashboard
     'dash.system_dashboard': '系统概览',
@@ -380,8 +401,8 @@ const translations = {
     'config.gateway': '网关',
     'config.time': '时间与 NTP',
     'config.logs.title': '日志清理与保留策略',
-    'config.logs.retention': '保留期限',
-    'config.logs.desc': '活跃数据库中超过 {days} 天的日志将被移至归档。',
+    'config.logs.retention': '保留期限 (天)',
+    'config.logs.desc': 'SQLite 中超过 {days} 天的日志将被清除。',
     'config.logs.archive': '删除前自动归档',
     'config.logs.archive_desc': '删除前压缩并移动旧日志到冷存储。',
     'config.logs.manual': '立即清理日志',
@@ -390,11 +411,11 @@ const translations = {
     'config.logs.archive_list': '归档日志数据库',
     'config.backup.title': '系统备份与恢复',
     'config.backup.create': '创建备份',
-    'config.backup.create_desc': '将系统 SQLite 数据库和配置打包为 ZIP 快照。',
+    'config.backup.create_desc': '下载系统 SQLite 数据库和配置的完整快照。',
     'config.backup.create_btn': '创建系统快照',
     'config.backup.download': '下载系统快照',
     'config.backup.restore': '恢复系统',
-    'config.backup.restore_desc': '上传 .zip 备份以恢复系统状态。',
+    'config.backup.restore_desc': '上传之前保存的快照以恢复系统状态。',
     'config.backup.upload': '点击上传备份文件',
     'config.backup.recent': '最近备份',
 
@@ -514,6 +535,7 @@ const translations = {
     'file.col.size': '大小',
     'file.col.status': '状态',
     'file.col.submitted': '提交时间',
+    'file.col.submitted_by': '提交人',
     'file.status.clean': '已重构',
     'file.status.malicious': '已净化',
     'file.status.scanning': '处理中...',

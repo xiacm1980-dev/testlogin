@@ -3,6 +3,7 @@ export enum Role {
   SYSADMIN = 'sysadmin',
   SECADMIN = 'secadmin',
   LOGADMIN = 'logadmin',
+  USER = 'user', // General User
 }
 
 export enum View {
@@ -15,7 +16,7 @@ export enum View {
   FILE_CLEANING = 'file_cleaning',
   API_SETTINGS = 'api_settings',
   LOGS_AUDIT = 'logs_audit',
-  ADMIN_LOGS = 'admin_logs', // New View
+  ADMIN_LOGS = 'admin_logs',
   REPORTS = 'reports',
 }
 
@@ -23,6 +24,17 @@ export interface User {
   username: string;
   role: Role;
   avatar: string;
+  name?: string; // Display name
+}
+
+export interface GeneralUser {
+  id: string; // Username
+  name: string;
+  password: string;
+  unit: string;
+  department: string;
+  contact: string;
+  createdAt: string;
 }
 
 export interface LogEntry {

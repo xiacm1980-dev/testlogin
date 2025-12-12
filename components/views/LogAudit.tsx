@@ -42,32 +42,15 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
     }
   };
 
-  // Filter based on View Type (System vs Admin) and then by user inputs
   const filteredLogs = logs.filter((log) => {
-    // 1. Filter by View Type
     const adminModules = ['AUTH', 'CONFIG', 'POLICY', 'SYSTEM'];
     const systemModules = ['FILE', 'VIDEO', 'API', 'THREAT'];
     
-    // Admin Logs: Show only admin-related modules
     if (type === 'ADMIN' && !adminModules.includes(log.module)) return false;
-    // System Logs: Show all modules OR specific ones depending on requirement. 
-    // Usually System Audit shows everything or specific operational logs. 
-    // Let's assume System Audit shows non-admin operational logs for clarity, or everything.
-    // Based on user request: "System Logs" vs "Admin Logs".
-    // SecAdmin sees "Log Audit" (System), LogAdmin sees both.
-    // Let's make System Logs show everything EXCEPT purely admin auth/config if needed, 
-    // but usually "Audit" implies everything. However, to distinguish, let's filter:
-    if (type === 'SYSTEM' && !systemModules.includes(log.module) && !adminModules.includes(log.module)) return true; // Show all for system? Or just system modules?
-    // Let's strictly follow the user prompt structure:
-    // Admin Logs: Login, Config, Policy, Service Actions.
-    // System Logs: File, Video, API, Threat.
     if (type === 'SYSTEM' && !systemModules.includes(log.module)) return false;
 
-
-    // 2. Filter by Severity
     const matchesFilter = filter === 'ALL' || log.severity === filter;
 
-    // 3. Filter by Search
     const message = t(log.messageKey, log.params);
     const matchesSearch = 
       message.toLowerCase().includes(search.toLowerCase()) || 
@@ -79,7 +62,6 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
   });
 
   const handleExport = (period: string) => {
-      // 1. Get data
       const now = new Date();
       let cutoff = new Date(0); // Default all time
       
@@ -89,7 +71,6 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
       
       const exportData = filteredLogs.filter(l => new Date(l.timestamp) >= cutoff);
 
-      // 2. CSV Generation
       const headers = ['Timestamp', 'Severity', 'Module', 'Message', 'Source/User'];
       const rows = exportData.map(l => [
           l.timestamp,
@@ -104,7 +85,6 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
           ...rows.map(r => r.join(','))
       ].join('\n');
 
-      // 3. Download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -166,7 +146,8 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
             <thead>
                <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                 <th className="px-6 py-3 font-semibold w-40">{t('log.col.time')}</th>
-                <th className="px-6 py-3 font-semibold w-24">{t('log.col.severity')}</th>
+                {/* Widen the Severity Column */}
+                <th className="px-6 py-3 font-semibold min-w-[120px]">{t('log.col.severity')}</th>
                 <th className="px-6 py-3 font-semibold w-24">{t('log.col.module')}</th>
                 <th className="px-6 py-3 font-semibold">{t('log.col.message')}</th>
                 <th className="px-6 py-3 font-semibold w-40">{t('log.col.source')}</th>
@@ -179,7 +160,7 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
                       {new Date(log.timestamp).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getSeverityClass(log.severity)}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getSeverityClass(log.severity)} whitespace-nowrap`}>
                       {getSeverityIcon(log.severity)}
                       {t(`log.level.${log.severity.toLowerCase()}`)}
                     </span>
@@ -205,7 +186,6 @@ const LogAudit: React.FC<LogAuditProps> = ({ type }) => {
         </div>
       </div>
 
-      {/* Export Modal */}
       {showExport && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
               <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative animate-in zoom-in duration-200">

@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import { Shield, Server, FileText, Lock, ArrowRight, Languages } from 'lucide-react';
+import { Shield, Server, FileText, Lock, ArrowRight, Languages, User } from 'lucide-react';
 import { Role } from '../types';
 import { ROLE_COLORS } from '../constants';
 import { useLanguage } from '../i18n';
+import { backend } from '../services/backend';
 
 interface LoginProps {
-  onLogin: (role: Role) => void;
+  onLogin: (role: Role, username?: string, name?: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [isGeneralUser, setIsGeneralUser] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { language, setLanguage, t } = useLanguage();
 
-  const handleLogin = () => {
+  const handleAdminLogin = () => {
     if (password === '123456') {
       if (selectedRole) {
         onLogin(selectedRole);
@@ -24,8 +27,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
+  const handleGeneralLogin = () => {
+      const user = backend.authenticateGeneralUser(username, password);
+      if (user) {
+          onLogin(Role.USER, user.id, user.name);
+      } else {
+          setError(t('login.invalid_creds'));
+      }
+  };
+
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
+    setIsGeneralUser(false);
     setError('');
     setPassword('');
   };
@@ -48,7 +61,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       </div>
 
       <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-2xl shadow-2xl max-w-4xl w-full z-10 transition-all">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 mb-6 shadow-lg border border-slate-700">
             <Shield className="w-10 h-10 text-blue-400" />
           </div>
@@ -56,8 +69,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <p className="text-slate-400 text-lg">{t('app.subtitle')}</p>
         </div>
 
-        {!selectedRole ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {!selectedRole && !isGeneralUser ? (
+          <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-8">
             {/* SysAdmin Card */}
             <button
               onClick={() => handleRoleSelect(Role.SYSADMIN)}
@@ -100,6 +114,70 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </p>
             </button>
           </div>
+          
+          <div className="text-center">
+             <button 
+                onClick={() => { setIsGeneralUser(true); setError(''); setPassword(''); setUsername(''); }}
+                className="text-slate-400 hover:text-white underline decoration-slate-600 hover:decoration-white transition-all text-sm"
+             >
+                Login as General User
+             </button>
+          </div>
+          </>
+        ) : isGeneralUser ? (
+             <div className="max-w-md mx-auto bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
+                <div className="text-center mb-6">
+                   <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="w-6 h-6 text-slate-300" />
+                   </div>
+                   <h3 className="text-xl text-white font-semibold">{t('login.general_title')}</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">{t('login.username')}</label>
+                    <input 
+                      type="text" 
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter username"
+                      className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">{t('login.password')}</label>
+                    <input 
+                      type="password" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGeneralLogin()}
+                      placeholder="Enter password"
+                      className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="text-red-400 text-sm bg-red-400/10 p-2 rounded">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-6">
+                    <button 
+                      onClick={() => setIsGeneralUser(false)}
+                      className="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {t('login.back')}
+                    </button>
+                    <button 
+                      onClick={handleGeneralLogin}
+                      className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      {t('login.button')} <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+             </div>
         ) : (
           <div className="max-w-md mx-auto bg-slate-800/80 p-8 rounded-xl border border-slate-700 animate-in fade-in zoom-in duration-300">
             <h3 className="text-xl text-white font-semibold mb-6 text-center">
@@ -113,7 +191,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
                   placeholder={t('login.placeholder')}
                   className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   autoFocus
@@ -134,7 +212,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   {t('login.back')}
                 </button>
                 <button 
-                  onClick={handleLogin}
+                  onClick={handleAdminLogin}
                   className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
                 >
                   {t('login.button')} <ArrowRight className="w-4 h-4" />

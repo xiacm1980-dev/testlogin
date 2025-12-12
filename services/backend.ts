@@ -1,4 +1,6 @@
 
+import { GeneralUser, Role } from '../types';
+
 // Types representing the DB schema (matching types.ts updates)
 export interface Task {
   id: string;
@@ -11,6 +13,7 @@ export interface Task {
   currentStep: string; // Translation key
   submittedAt: string;
   completedAt?: string;
+  submittedBy: string; // New field
 }
 
 export interface ThreatStats {
@@ -124,7 +127,8 @@ const STORAGE_KEYS = {
   ARCHIVES: 'aegis_db_archives',
   BACKUPS: 'aegis_db_backups',
   NET_CONFIG: 'aegis_db_net_config',
-  LOG_CONFIG: 'aegis_db_log_config'
+  LOG_CONFIG: 'aegis_db_log_config',
+  USERS: 'aegis_db_users' // New key
 };
 
 // Singleton Mock Backend Class
@@ -135,6 +139,7 @@ class BackendService {
   private reports: Report[] = [];
   private archives: ArchiveFile[] = [];
   private backups: BackupFile[] = [];
+  private generalUsers: GeneralUser[] = [];
   
   private networkConfig: NetworkConfig = {
       hostname: 'aegis-core-01',
@@ -204,6 +209,7 @@ class BackendService {
     const b = localStorage.getItem(STORAGE_KEYS.BACKUPS);
     const nc = localStorage.getItem(STORAGE_KEYS.NET_CONFIG);
     const lc = localStorage.getItem(STORAGE_KEYS.LOG_CONFIG);
+    const u = localStorage.getItem(STORAGE_KEYS.USERS);
 
     if (t) this.tasks = JSON.parse(t);
     if (th) this.threats = { ...this.threats, ...JSON.parse(th) };
@@ -215,12 +221,13 @@ class BackendService {
     if (b) this.backups = JSON.parse(b);
     if (nc) this.networkConfig = JSON.parse(nc);
     if (lc) this.logConfig = JSON.parse(lc);
+    if (u) this.generalUsers = JSON.parse(u);
 
     // Seed defaults
     if (this.tasks.length === 0) {
       this.tasks = [
-        { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', sizeBytes: 2400000, status: 'CLEAN', type: 'DOC', progress: 100, currentStep: 'file.status.clean', submittedAt: '10:42 AM' },
-        { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', sizeBytes: 5100000, status: 'MALICIOUS', type: 'IMG', progress: 100, currentStep: 'file.status.malicious', submittedAt: '10:45 AM' }
+        { id: 'T-10293', name: 'financial_report_q3.docx', size: '2.4 MB', sizeBytes: 2400000, status: 'CLEAN', type: 'DOC', progress: 100, currentStep: 'file.status.clean', submittedAt: '10:42 AM', submittedBy: 'System' },
+        { id: 'T-10294', name: 'site_photo.jpg', size: '5.1 MB', sizeBytes: 5100000, status: 'MALICIOUS', type: 'IMG', progress: 100, currentStep: 'file.status.malicious', submittedAt: '10:45 AM', submittedBy: 'System' }
       ];
     }
     
@@ -233,11 +240,9 @@ class BackendService {
        ];
     }
     
-    // Seed Archives if empty
-    if (this.archives.length === 0) {
-        this.archives = [
-            { id: 'arc_01', filename: 'aegis_logs_2023_08.sqlite', month: '2023-08', size: '450 MB', createdAt: '2023-09-01T00:00:00Z' },
-            { id: 'arc_02', filename: 'aegis_logs_2023_09.sqlite', month: '2023-09', size: '482 MB', createdAt: '2023-10-01T00:00:00Z' }
+    if (this.generalUsers.length === 0) {
+        this.generalUsers = [
+            { id: 'user01', name: 'John Doe', password: 'password', unit: 'Headquarters', department: 'Finance', contact: '555-0101', createdAt: new Date().toISOString() }
         ];
     }
     
@@ -256,6 +261,7 @@ class BackendService {
     localStorage.setItem(STORAGE_KEYS.BACKUPS, JSON.stringify(this.backups));
     localStorage.setItem(STORAGE_KEYS.NET_CONFIG, JSON.stringify(this.networkConfig));
     localStorage.setItem(STORAGE_KEYS.LOG_CONFIG, JSON.stringify(this.logConfig));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.generalUsers));
   }
 
   public log(module: LogEntry['module'], severity: LogEntry['severity'], messageKey: string, params?: Record<string, any>, sourceIp?: string, user?: string) {
@@ -476,12 +482,12 @@ class BackendService {
   public getBackups() { return [...this.backups].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); }
   
   public createBackup() {
-      // Snapshot everything
       const snapshot = {
           tasks: this.tasks,
           policies: this.policies,
           network: this.networkConfig,
-          threatConfig: this.threatConfig
+          threatConfig: this.threatConfig,
+          users: this.generalUsers
       };
       
       const newBackup: BackupFile = {
@@ -508,6 +514,7 @@ class BackendService {
             if (data.policies) this.policies = data.policies;
             if (data.network) this.networkConfig = data.network;
             if (data.threatConfig) this.threatConfig = data.threatConfig;
+            if (data.users) this.generalUsers = data.users;
             this.log('SYSTEM', 'WARN', `System restored from backup ${backup.name}`);
             this.save();
             return true;
@@ -519,12 +526,34 @@ class BackendService {
       return false;
   }
 
-  // --- Auth/Files/Other ---
-  public loginUser(user: string, role: string) {
-      this.log('AUTH', 'INFO', 'log.msg.login_success', { user }, undefined, user);
+  // --- Auth & User Management ---
+  public loginUser(username: string, role: Role) {
+      this.log('AUTH', 'INFO', 'log.msg.login_success', { user: username }, undefined, username);
+  }
+  
+  public authenticateGeneralUser(id: string, pass: string): GeneralUser | null {
+      const user = this.generalUsers.find(u => u.id === id && u.password === pass);
+      return user || null;
   }
 
-  public uploadFile(file: File) {
+  public getGeneralUsers() { return [...this.generalUsers]; }
+
+  public addGeneralUser(user: GeneralUser) {
+      this.generalUsers.push(user);
+      this.save();
+  }
+
+  public updateGeneralUser(user: GeneralUser) {
+      this.generalUsers = this.generalUsers.map(u => u.id === user.id ? user : u);
+      this.save();
+  }
+
+  public deleteGeneralUser(id: string) {
+      this.generalUsers = this.generalUsers.filter(u => u.id !== id);
+      this.save();
+  }
+
+  public uploadFile(file: File, submittedBy: string = 'System') {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     let type: Task['type'] = 'OTHER';
     if (['txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'wps'].includes(ext)) type = 'DOC';
@@ -540,7 +569,8 @@ class BackendService {
       type,
       progress: 0,
       currentStep: 'file.step.uploading',
-      submittedAt: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      submittedAt: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      submittedBy
     };
     this.tasks.unshift(newTask);
     this.save();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/views/Dashboard';
@@ -10,6 +10,7 @@ import VideoStream from './components/views/VideoStream';
 import FileCleaning from './components/views/FileCleaning';
 import ApiSettings from './components/views/ApiSettings';
 import Reports from './components/views/Reports';
+import UserManagement from './components/views/UserManagement'; // New Import
 import { Role, User, View } from './types';
 import { Key, X, Languages } from 'lucide-react';
 import { useLanguage } from './i18n';
@@ -21,21 +22,46 @@ const App: React.FC = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-  const handleLogin = (role: Role) => {
-    const username = role === Role.SYSADMIN ? 'sysadmin' : role === Role.SECADMIN ? 'secadmin' : 'logadmin';
-    // Simulate login
-    setUser({
-      username: username,
+  useEffect(() => {
+     // Check for persisted session
+     const storedUser = sessionStorage.getItem('aegis_user_session');
+     if (storedUser) {
+         try {
+             const u = JSON.parse(storedUser);
+             setUser(u);
+             // Default view for general user
+             if (u.role === Role.USER) {
+                 setCurrentView(View.FILE_CLEANING);
+             }
+         } catch(e) { console.error('Failed to restore session', e); }
+     }
+  }, []);
+
+  const handleLogin = (role: Role, username?: string, name?: string) => {
+    const finalUsername = username || (role === Role.SYSADMIN ? 'sysadmin' : role === Role.SECADMIN ? 'secadmin' : 'logadmin');
+    const newUser = {
+      username: finalUsername,
       role: role,
       avatar: 'https://picsum.photos/200',
-    });
-    backend.loginUser(username, role); // Log the login event
-    setCurrentView(View.DASHBOARD);
+      name: name || finalUsername
+    };
+    
+    setUser(newUser);
+    sessionStorage.setItem('aegis_user_session', JSON.stringify(newUser));
+
+    backend.loginUser(finalUsername, role); // Log the login event
+    
+    if (role === Role.USER) {
+        setCurrentView(View.FILE_CLEANING);
+    } else {
+        setCurrentView(View.DASHBOARD);
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     setCurrentView(View.DASHBOARD);
+    sessionStorage.removeItem('aegis_user_session');
   };
 
   const renderContent = () => {
@@ -43,9 +69,11 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case View.DASHBOARD:
-        return <Dashboard role={user.role} />;
+        return user.role !== Role.USER ? <Dashboard role={user.role} /> : <Unauthorized />;
       case View.SYSTEM_CONFIG:
         return user.role === Role.SYSADMIN ? <SystemConfig /> : <Unauthorized />;
+      case View.USER_MANAGEMENT:
+        return user.role === Role.SYSADMIN ? <UserManagement /> : <Unauthorized />;
       case View.API_SETTINGS:
         return user.role === Role.SYSADMIN ? <ApiSettings /> : <Unauthorized />;
       case View.SECURITY_POLICIES:
@@ -55,9 +83,9 @@ const App: React.FC = () => {
       case View.VIDEO_CLEANING:
         return user.role === Role.SECADMIN ? <VideoStream /> : <Unauthorized />;
       case View.FILE_CLEANING:
-        return user.role === Role.SECADMIN ? <FileCleaning /> : <Unauthorized />;
+        // Both SecAdmin and General User can access File Cleaning
+        return (user.role === Role.SECADMIN || user.role === Role.USER) ? <FileCleaning currentUser={user.name} /> : <Unauthorized />;
       case View.LOGS_AUDIT:
-        // SecAdmin and LogAdmin can see logs
         return (user.role === Role.LOGADMIN || user.role === Role.SECADMIN) ? <LogAudit type="SYSTEM" /> : <Unauthorized />;
       case View.ADMIN_LOGS:
         return user.role === Role.LOGADMIN ? <LogAudit type="ADMIN" /> : <Unauthorized />;
@@ -72,6 +100,43 @@ const App: React.FC = () => {
     return <Login onLogin={handleLogin} />;
   }
 
+  // Simplified Layout for General User
+  if (user.role === Role.USER) {
+     return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+            <header className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold">A</div>
+                   <h1 className="text-xl font-bold">Aegis CDR Portal</h1>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-sm">
+                      <span className="text-slate-400">Welcome,</span> <span className="font-semibold">{user.name}</span>
+                   </div>
+                   <button 
+                      onClick={() => setShowPasswordModal(true)}
+                      className="text-slate-300 hover:text-white text-sm flex items-center gap-1"
+                   >
+                      <Key className="w-4 h-4"/> Account
+                   </button>
+                   <button 
+                      onClick={handleLogout}
+                      className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
+                   >
+                      Sign Out
+                   </button>
+                </div>
+            </header>
+            <main className="flex-1 p-8 max-w-6xl mx-auto w-full">
+                {renderContent()}
+            </main>
+            
+            {showPasswordModal && <PasswordModal onClose={() => setShowPasswordModal(false)} t={t} />}
+        </div>
+     );
+  }
+
+  // Standard Admin Layout
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar 
@@ -121,56 +186,39 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Change Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
-              <button 
-                onClick={() => setShowPasswordModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h3 className="text-xl font-bold text-slate-900 mb-6">{t('common.change_password')}</h3>
-              <div className="space-y-4">
-                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.current_password')}</label>
-                    <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
-                 </div>
-                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.new_password')}</label>
-                    <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
-                 </div>
-                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.confirm_password')}</label>
-                    <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
-                 </div>
-                 <div className="flex justify-end gap-3 mt-6">
-                    <button 
-                      onClick={() => setShowPasswordModal(false)}
-                      className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                    <button 
-                      onClick={() => {
-                        alert(t('common.password_changed'));
-                        setShowPasswordModal(false);
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium"
-                    >
-                      {t('common.update_password')}
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
+      {showPasswordModal && <PasswordModal onClose={() => setShowPasswordModal(false)} t={t} />}
     </div>
   );
 };
 
-// Helper Components for simple states
+const PasswordModal: React.FC<{ onClose: () => void, t: any }> = ({ onClose, t }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        <h3 className="text-xl font-bold text-slate-900 mb-6">{t('common.change_password')}</h3>
+        <div className="space-y-4">
+            <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.current_password')}</label>
+            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
+            </div>
+            <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.new_password')}</label>
+            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
+            </div>
+            <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.confirm_password')}</label>
+            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+            <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+            <button onClick={() => { alert(t('common.password_changed')); onClose(); }} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium">{t('common.update_password')}</button>
+            </div>
+        </div>
+        </div>
+    </div>
+);
+
+// Helper Components
 const Unauthorized: React.FC = () => {
   const { t } = useLanguage();
   return (

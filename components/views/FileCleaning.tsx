@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film, Loader2, Download } from 'lucide-react';
+import { UploadCloud, File, CheckCircle, XCircle, Clock, Search, FileType, Image, Film, Loader2, Download, User } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 import { backend, Task } from '../../services/backend';
+import { Role } from '../../types';
 
-const FileCleaning: React.FC = () => {
+interface FileCleaningProps {
+    currentUser?: string;
+}
+
+const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
@@ -40,14 +45,12 @@ const FileCleaning: React.FC = () => {
   const handleFiles = (files: File[]) => {
     // Upload each file to backend
     files.forEach(file => {
-        backend.uploadFile(file);
+        backend.uploadFile(file, currentUser);
     });
-    // State updates automatically via polling in useEffect
   };
 
   const handleDownload = (fileName: string) => {
       // Simulate download from backend (which would serve the cleaned file)
-      // We append "cleaned_" to the name to signify the backend processing result
       const link = document.createElement('a');
       link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('Simulated Cleaned Content from Aegis Backend');
       link.download = `cleaned_${fileName}`;
@@ -76,7 +79,7 @@ const FileCleaning: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
          <h2 className="text-2xl font-bold text-slate-900">{t('file.title')}</h2>
          <p className="text-slate-500">{t('file.subtitle')}</p>
@@ -142,6 +145,7 @@ const FileCleaning: React.FC = () => {
                <tr>
                   <th className="px-6 py-3 font-medium">{t('file.col.task')}</th>
                   <th className="px-6 py-3 font-medium">{t('file.col.filename')}</th>
+                  <th className="px-6 py-3 font-medium">{t('file.col.submitted_by')}</th>
                   <th className="px-6 py-3 font-medium">{t('file.col.size')}</th>
                   <th className="px-6 py-3 font-medium">{t('file.col.status')}</th>
                   <th className="px-6 py-3 font-medium">{t('file.col.submitted')}</th>
@@ -157,6 +161,11 @@ const FileCleaning: React.FC = () => {
                          task.type === 'AV' ? <Film className="w-4 h-4 text-rose-400" /> :
                          <File className="w-4 h-4 text-blue-400" />}
                         {task.name}
+                     </td>
+                     <td className="px-6 py-4 text-slate-600">
+                        <span className="flex items-center gap-1.5">
+                            <User className="w-3 h-3 text-slate-400"/> {task.submittedBy || 'System'}
+                        </span>
                      </td>
                      <td className="px-6 py-4 text-slate-500">{task.size}</td>
                      <td className="px-6 py-4">{getStatusBadge(task)}</td>
