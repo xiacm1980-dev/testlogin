@@ -199,7 +199,8 @@ const App: React.FC = () => {
 };
 
 const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ onClose, t, user }) => {
-    const [activeTab, setActiveTab] = useState<'basic' | 'password'>('basic');
+    const isGeneralUser = user.role === Role.USER;
+    const [activeTab, setActiveTab] = useState<'basic' | 'password'>(isGeneralUser ? 'basic' : 'password');
     
     // Password State
     const [currentPass, setCurrentPass] = useState('');
@@ -212,13 +213,13 @@ const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ o
     const [infoError, setInfoError] = useState('');
 
     useEffect(() => {
-        // Fetch current user info
-        if (user.role === Role.USER) {
+        // Fetch current user info if it's a general user
+        if (isGeneralUser) {
             const generalUsers = backend.getGeneralUsers();
             const currentUser = generalUsers.find(u => u.id === user.username);
             if (currentUser) setUserInfo(currentUser);
         }
-    }, [user]);
+    }, [user, isGeneralUser]);
 
     const handlePasswordSubmit = () => {
         setPassError('');
@@ -256,22 +257,25 @@ const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ o
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
             <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-            <h3 className="text-xl font-bold text-slate-900 mb-6">{t('common.account')}</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-6">{isGeneralUser ? t('common.account') : t('common.change_password')}</h3>
             
-            <div className="flex gap-2 mb-6 border-b border-slate-100 pb-2">
-                <button 
-                    onClick={() => setActiveTab('basic')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'basic' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    {t('common.basic_info')}
-                </button>
-                <button 
-                    onClick={() => setActiveTab('password')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'password' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    {t('common.change_password')}
-                </button>
-            </div>
+            {/* Only show tabs for General Users */}
+            {isGeneralUser && (
+                <div className="flex gap-2 mb-6 border-b border-slate-100 pb-2">
+                    <button 
+                        onClick={() => setActiveTab('basic')}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'basic' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        {t('common.basic_info')}
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('password')}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'password' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        {t('common.change_password')}
+                    </button>
+                </div>
+            )}
 
             {activeTab === 'password' && (
                 <div className="space-y-4">
@@ -295,7 +299,7 @@ const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ o
                 </div>
             )}
 
-            {activeTab === 'basic' && (
+            {activeTab === 'basic' && isGeneralUser && (
                 <div className="space-y-4">
                     {userInfo ? (
                         <>
@@ -328,7 +332,7 @@ const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ o
                         </>
                     ) : (
                         <div className="text-center py-8 text-slate-500">
-                            User information not available for this role.
+                            User information not available.
                         </div>
                     )}
                 </div>
