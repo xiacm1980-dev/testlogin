@@ -48,14 +48,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setSelectedRole(null);
   }
 
-  // Dynamic placeholder logic
-  const getAdminPlaceholder = () => {
-      if (selectedRole && backend.isDefaultAdminPassword(selectedRole)) {
-          return t('login.placeholder_default');
-      }
-      return t('login.placeholder');
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Background decoration */}
@@ -150,11 +142,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">{t('login.password')}</label>
                         <input 
-                        type="password" 
+                        type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
-                        placeholder={getAdminPlaceholder()}
+                        placeholder={t('login.placeholder_default')}
                         className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         autoFocus
                         />

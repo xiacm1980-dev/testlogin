@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Plus, Trash2, Search, Edit2, User, Save, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { backend } from '../../services/backend';
 import { GeneralUser } from '../../types';
@@ -48,7 +49,16 @@ const UserManagement: React.FC = () => {
 
   const handleSubmit = () => {
     if (!form.id || !form.name || !form.password) return;
-    
+
+    // Validate password strength only for new users or if password changed
+    if (!editingUser || form.password !== editingUser.password) {
+        const validation = backend.validatePasswordStrength(form.password);
+        if (!validation.valid) {
+            toast.error(t(validation.error || 'Invalid password'));
+            return;
+        }
+    }
+
     const userData: GeneralUser = {
       ...form,
       createdAt: editingUser ? editingUser.createdAt : new Date().toISOString()
@@ -59,7 +69,7 @@ const UserManagement: React.FC = () => {
     } else {
       backend.addGeneralUser(userData);
     }
-    
+
     setUsers(backend.getGeneralUsers());
     setShowModal(false);
   };

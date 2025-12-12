@@ -1,121 +1,21 @@
 
-import { GeneralUser, Role } from '../types';
-
-// Types representing the DB schema (matching types.ts updates)
-export interface Task {
-  id: string;
-  name: string;
-  size: string;
-  sizeBytes: number;
-  status: 'CLEAN' | 'MALICIOUS' | 'SCANNING' | 'UPLOADING';
-  type: 'DOC' | 'IMG' | 'AV' | 'OTHER';
-  progress: number; // 0-100
-  currentStep: string; // Translation key
-  submittedAt: string;
-  completedAt?: string;
-  submittedBy: string; // New field
-}
-
-export interface ThreatStats {
-  pps: number;
-  dropped: number;
-  sources: number;
-  mitigating: boolean;
-  
-  // Persisted Stats
-  malware_detected: number;
-  total_attacks: number;
-  active_rules: number;
-  
-  uptime_start: number;
-  active_video_tasks: number;
-  active_file_tasks: number;
-}
-
-export interface ServiceStatus {
-  name: string;
-  status: 'running' | 'degraded' | 'stopped';
-  load: 'low' | 'medium' | 'high';
-  lastCheck: string;
-}
-
-export interface SystemStats {
-  cpu: number;
-  memory: { used: number; total: number };
-  disk: { used: number; total: number };
-  services: ServiceStatus[];
-}
-
-export interface PolicyRule {
-  id: number;
-  name: string;
-  source: string;
-  destination: string;
-  service: string;
-  action: 'ALLOW' | 'DENY';
-  enabled: boolean;
-}
-
-export interface ThreatConfig {
-  synThreshold: number;
-  udpThreshold: number;
-  synAction: 'drop' | 'blacklist';
-  udpAction: 'drop' | 'ratelimit';
-  whitelist: string[];
-}
-
-export interface LogEntry {
-  id: number;
-  timestamp: string;
-  severity: 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
-  module: 'AUTH' | 'CONFIG' | 'POLICY' | 'SYSTEM' | 'FILE' | 'VIDEO' | 'API' | 'THREAT';
-  messageKey: string;
-  params?: Record<string, string | number>;
-  sourceIp?: string;
-  user?: string;
-}
-
-export interface Report {
-  id: string;
-  name: string;
-  type: 'AUDIT' | 'TRAFFIC' | 'COMPLIANCE';
-  dateRange: string;
-  generatedBy: string;
-  generatedAt: string; // ISO String
-  content: string; // The text content of the report
-}
-
-export interface ArchiveFile {
-    id: string;
-    filename: string; // e.g., archive_2023_08.sqlite
-    month: string; // 2023-08
-    size: string;
-    createdAt: string;
-}
-
-export interface BackupFile {
-    id: string;
-    name: string;
-    createdAt: string;
-    size: string;
-    type: 'MANUAL' | 'AUTO';
-    data: string; // JSON string of the state
-}
-
-export interface NetworkConfig {
-    hostname: string;
-    ipAddress: string;
-    netmask: string;
-    gateway: string;
-    dns1: string;
-    ntpServer: string;
-}
-
-export interface LogConfig {
-    retentionDays: number;
-    diskCleanupThreshold: number; // Percentage (30%)
-    autoArchive: boolean;
-}
+import {
+    GeneralUser,
+    Role,
+    LogEntry,
+    PolicyRule,
+    SystemStats,
+    Task,
+    ThreatStats,
+    ServiceStatus,
+    ThreatConfig,
+    Report,
+    ArchiveFile,
+    BackupFile,
+    NetworkConfig,
+    LogConfig
+} from '../types';
+import bcrypt from 'bcryptjs';
 
 interface AdminUser {
     role: Role;
@@ -251,15 +151,15 @@ class BackendService {
     
     if (this.generalUsers.length === 0) {
         this.generalUsers = [
-            { id: 'user01', name: 'John Doe', password: 'password', unit: 'Headquarters', department: 'Finance', contact: '555-0101', createdAt: new Date().toISOString() }
+            { id: 'user01', name: 'John Doe', password: bcrypt.hashSync('password', 10), unit: 'Headquarters', department: 'Finance', contact: '555-0101', createdAt: new Date().toISOString() }
         ];
     }
 
     if (this.adminUsers.length === 0) {
         this.adminUsers = [
-            { role: Role.SYSADMIN, password: '123456' },
-            { role: Role.SECADMIN, password: '123456' },
-            { role: Role.LOGADMIN, password: '123456' }
+            { role: Role.SYSADMIN, password: bcrypt.hashSync('123456', 10) },
+            { role: Role.SECADMIN, password: bcrypt.hashSync('123456', 10) },
+            { role: Role.LOGADMIN, password: bcrypt.hashSync('123456', 10) }
         ];
     }
     
@@ -552,33 +452,28 @@ class BackendService {
   }
   
   public authenticateGeneralUser(id: string, pass: string): GeneralUser | null {
-      const user = this.generalUsers.find(u => u.id === id && u.password === pass);
-      return user || null;
+      const user = this.generalUsers.find(u => u.id === id);
+      return (user && bcrypt.compareSync(pass, user.password)) ? user : null;
   }
 
   public authenticateAdmin(role: Role, pass: string): boolean {
       const admin = this.adminUsers.find(a => a.role === role);
-      return admin ? admin.password === pass : false;
-  }
-
-  public isDefaultAdminPassword(role: Role): boolean {
-      const admin = this.adminUsers.find(a => a.role === role);
-      return admin ? admin.password === '123456' : false;
+      return admin ? bcrypt.compareSync(pass, admin.password) : false;
   }
 
   public changePassword(username: string, role: Role, oldPass: string, newPass: string): boolean {
       if (role === Role.USER) {
           const user = this.generalUsers.find(u => u.id === username);
-          if (user && user.password === oldPass) {
-              user.password = newPass;
+          if (user && bcrypt.compareSync(oldPass, user.password)) {
+              user.password = bcrypt.hashSync(newPass, 10);
               this.log('AUTH', 'INFO', `Password changed for user ${username}`, undefined, undefined, username);
               this.save();
               return true;
           }
       } else {
           const admin = this.adminUsers.find(a => a.role === role);
-          if (admin && admin.password === oldPass) {
-              admin.password = newPass;
+          if (admin && bcrypt.compareSync(oldPass, admin.password)) {
+              admin.password = bcrypt.hashSync(newPass, 10);
               this.log('AUTH', 'WARN', `Password changed for admin ${role}`, undefined, undefined, role);
               this.save();
               return true;
@@ -587,10 +482,31 @@ class BackendService {
       return false;
   }
 
+  public validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+      if (password.length < 8) {
+          return { valid: false, error: 'error.password_length' };
+      }
+      if (!/[A-Z]/.test(password)) {
+          return { valid: false, error: 'error.password_uppercase' };
+      }
+      if (!/[a-z]/.test(password)) {
+          return { valid: false, error: 'error.password_lowercase' };
+      }
+      if (!/[0-9]/.test(password)) {
+          return { valid: false, error: 'error.password_number' };
+      }
+      return { valid: true };
+  }
+
   public getGeneralUsers() { return [...this.generalUsers]; }
 
   public addGeneralUser(user: GeneralUser) {
-      this.generalUsers.push(user);
+      // Hash password before storing
+      const userWithHashedPassword = {
+          ...user,
+          password: bcrypt.hashSync(user.password, 10)
+      };
+      this.generalUsers.push(userWithHashedPassword);
       this.save();
   }
 

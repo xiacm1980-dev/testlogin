@@ -306,6 +306,12 @@ const translations = {
     'common.access_denied': 'Access Denied',
     'common.no_permission': 'Your role does not have permission to view this resource.',
     'common.coming_soon': 'This module is under development.',
+
+    // Password Validation Errors
+    'error.password_length': 'Password must be at least 8 characters',
+    'error.password_uppercase': 'Password must contain uppercase letter',
+    'error.password_lowercase': 'Password must contain lowercase letter',
+    'error.password_number': 'Password must contain number',
   },
   zh: {
     'app.title': 'Aegis CDR 系统',
@@ -610,6 +616,12 @@ const translations = {
     'common.access_denied': '访问被拒绝',
     'common.no_permission': '您的角色没有权限查看此资源。',
     'common.coming_soon': '此模块正在开发中。',
+
+    // Password Validation Errors
+    'error.password_length': '密码长度至少8个字符',
+    'error.password_uppercase': '密码必须包含大写字母',
+    'error.password_lowercase': '密码必须包含小写字母',
+    'error.password_number': '密码必须包含数字',
   }
 };
 
