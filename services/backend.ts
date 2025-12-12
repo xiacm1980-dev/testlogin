@@ -520,7 +520,19 @@ class BackendService {
   }
 
   public updateGeneralUser(user: GeneralUser) {
-      this.generalUsers = this.generalUsers.map(u => u.id === user.id ? user : u);
+      const existingUser = this.generalUsers.find(u => u.id === user.id);
+      if (!existingUser) return;
+
+      // Only hash password if it's being changed (not already a hash)
+      // A bcrypt hash always starts with $2a$, $2b$, or $2y$ and is 60 chars
+      const isBcryptHash = user.password.startsWith('$2') && user.password.length === 60;
+
+      const updatedUser = {
+          ...user,
+          password: isBcryptHash ? user.password : bcrypt.hashSync(user.password, 10)
+      };
+
+      this.generalUsers = this.generalUsers.map(u => u.id === user.id ? updatedUser : u);
       this.save();
   }
 

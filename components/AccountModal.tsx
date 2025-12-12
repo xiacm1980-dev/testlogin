@@ -36,18 +36,18 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, t, user }) => {
     const handlePasswordSubmit = () => {
         setPassError('');
         if (!currentPass || !newPass || !confirmPass) {
-            setPassError('All fields are required');
+            setPassError(t('error.all_fields_required'));
             return;
         }
         if (newPass !== confirmPass) {
-            setPassError('New passwords do not match');
+            setPassError(t('error.password_mismatch'));
             return;
         }
 
         // Validate password strength
         const validation = backend.validatePasswordStrength(newPass);
         if (!validation.valid) {
-            setPassError(t(validation.error || 'Invalid password'));
+            setPassError(t(validation.error || 'error.invalid_password'));
             return;
         }
 
@@ -57,7 +57,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, t, user }) => {
             toast.success(t('common.password_changed'));
             onClose();
         } else {
-            setPassError('Incorrect current password');
+            setPassError(t('error.incorrect_current_password'));
         }
     };
 
@@ -154,7 +154,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, t, user }) => {
                         </>
                     ) : (
                         <div className="text-center py-8 text-slate-500">
-                            User information not available.
+                            {t('error.user_info_unavailable')}
                         </div>
                     )}
                 </div>

@@ -59,6 +59,12 @@ const translations = {
     'user.subtitle': 'Manage general user accounts and access.',
     'user.delete_confirm': 'Are you sure you want to delete this user?',
     'user.update_success': 'User information updated successfully.',
+    'user.password_hint_keep': 'Leave empty to keep current password',
+    'user.password_placeholder_edit': 'Enter new password or leave empty',
+    'user.password_placeholder_new': 'Enter password',
+    'user.password_requirements': 'At least 8 characters, including uppercase, lowercase, and numbers',
+    'user.added': 'User added successfully',
+    'user.updated': 'User updated successfully',
 
     // Dashboard
     'dash.system_dashboard': 'System Dashboard',
@@ -312,6 +318,11 @@ const translations = {
     'error.password_uppercase': 'Password must contain uppercase letter',
     'error.password_lowercase': 'Password must contain lowercase letter',
     'error.password_number': 'Password must contain number',
+    'error.all_fields_required': 'All fields are required',
+    'error.password_mismatch': 'New passwords do not match',
+    'error.invalid_password': 'Invalid password',
+    'error.incorrect_current_password': 'Incorrect current password',
+    'error.user_info_unavailable': 'User information not available',
   },
   zh: {
     'app.title': 'Aegis CDR 系统',
@@ -369,6 +380,12 @@ const translations = {
     'user.subtitle': '管理一般用户账号和权限。',
     'user.delete_confirm': '确定要删除此用户吗？',
     'user.update_success': '用户信息更新成功。',
+    'user.password_hint_keep': '留空保持原密码',
+    'user.password_placeholder_edit': '输入新密码或留空',
+    'user.password_placeholder_new': '输入密码',
+    'user.password_requirements': '至少8个字符，包括大写、小写字母和数字',
+    'user.added': '用户添加成功',
+    'user.updated': '用户更新成功',
 
     // Dashboard
     'dash.system_dashboard': '系统概览',
@@ -622,6 +639,11 @@ const translations = {
     'error.password_uppercase': '密码必须包含大写字母',
     'error.password_lowercase': '密码必须包含小写字母',
     'error.password_number': '密码必须包含数字',
+    'error.all_fields_required': '所有字段都是必填的',
+    'error.password_mismatch': '新密码不匹配',
+    'error.invalid_password': '密码无效',
+    'error.incorrect_current_password': '当前密码不正确',
+    'error.user_info_unavailable': '用户信息不可用',
   }
 };
 
