@@ -19,7 +19,7 @@ import { backend } from './services/backend';
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
@@ -107,7 +107,7 @@ const App: React.FC = () => {
             <header className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
                 <div className="flex items-center gap-3">
                    <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold">A</div>
-                   <h1 className="text-xl font-bold">Aegis CDR Portal</h1>
+                   <h1 className="text-xl font-bold">{t('app.portal')}</h1>
                 </div>
                 <div className="flex items-center gap-6">
                    <div className="text-sm">
@@ -121,16 +121,16 @@ const App: React.FC = () => {
                    </button>
                    <div className="h-4 w-px bg-slate-700"></div>
                    <button 
-                      onClick={() => setShowPasswordModal(true)}
+                      onClick={() => setShowAccountModal(true)}
                       className="text-slate-300 hover:text-white text-sm flex items-center gap-1"
                    >
-                      <Key className="w-4 h-4"/> Account
+                      <Key className="w-4 h-4"/> {t('common.account')}
                    </button>
                    <button 
                       onClick={handleLogout}
                       className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium transition-colors"
                    >
-                      Sign Out
+                      {t('common.signout')}
                    </button>
                 </div>
             </header>
@@ -138,7 +138,7 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             
-            {showPasswordModal && <PasswordModal onClose={() => setShowPasswordModal(false)} t={t} />}
+            {showAccountModal && <AccountModal onClose={() => setShowAccountModal(false)} t={t} user={user} />}
         </div>
      );
   }
@@ -169,7 +169,7 @@ const App: React.FC = () => {
              </button>
              <div className="h-6 w-px bg-slate-200"></div>
              <button 
-                onClick={() => setShowPasswordModal(true)}
+                onClick={() => setShowAccountModal(true)}
                 className="text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 text-sm font-medium"
              >
                 <Key className="w-4 h-4" /> {t('common.change_password')}
@@ -193,37 +193,150 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      {showPasswordModal && <PasswordModal onClose={() => setShowPasswordModal(false)} t={t} />}
+      {showAccountModal && <AccountModal onClose={() => setShowAccountModal(false)} t={t} user={user} />}
     </div>
   );
 };
 
-const PasswordModal: React.FC<{ onClose: () => void, t: any }> = ({ onClose, t }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-        <h3 className="text-xl font-bold text-slate-900 mb-6">{t('common.change_password')}</h3>
-        <div className="space-y-4">
-            <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.current_password')}</label>
-            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
+const AccountModal: React.FC<{ onClose: () => void, t: any, user: User }> = ({ onClose, t, user }) => {
+    const [activeTab, setActiveTab] = useState<'basic' | 'password'>('basic');
+    
+    // Password State
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [passError, setPassError] = useState('');
+
+    // Basic Info State
+    const [userInfo, setUserInfo] = useState<any>(null);
+    const [infoError, setInfoError] = useState('');
+
+    useEffect(() => {
+        // Fetch current user info
+        if (user.role === Role.USER) {
+            const generalUsers = backend.getGeneralUsers();
+            const currentUser = generalUsers.find(u => u.id === user.username);
+            if (currentUser) setUserInfo(currentUser);
+        }
+    }, [user]);
+
+    const handlePasswordSubmit = () => {
+        setPassError('');
+        if (!currentPass || !newPass || !confirmPass) {
+            setPassError('All fields are required');
+            return;
+        }
+        if (newPass !== confirmPass) {
+            setPassError('New passwords do not match');
+            return;
+        }
+        
+        const success = backend.changePassword(user.username, user.role, currentPass, newPass);
+        
+        if (success) {
+            alert(t('common.password_changed'));
+            onClose();
+        } else {
+            setPassError('Incorrect current password');
+        }
+    };
+
+    const handleInfoSubmit = () => {
+        if (!userInfo) return;
+        backend.updateGeneralUser(userInfo);
+        alert(t('user.update_success'));
+        // Optionally update local storage session if name changed
+        const currentSession = JSON.parse(sessionStorage.getItem('aegis_user_session') || '{}');
+        currentSession.name = userInfo.name;
+        sessionStorage.setItem('aegis_user_session', JSON.stringify(currentSession));
+        window.location.reload(); // Simple reload to reflect name change in header
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
+            <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+            <h3 className="text-xl font-bold text-slate-900 mb-6">{t('common.account')}</h3>
+            
+            <div className="flex gap-2 mb-6 border-b border-slate-100 pb-2">
+                <button 
+                    onClick={() => setActiveTab('basic')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'basic' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {t('common.basic_info')}
+                </button>
+                <button 
+                    onClick={() => setActiveTab('password')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'password' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {t('common.change_password')}
+                </button>
             </div>
-            <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.new_password')}</label>
-            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
-            </div>
-            <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.confirm_password')}</label>
-            <input type="password" className="w-full border border-slate-300 rounded-lg px-4 py-2" />
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-            <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
-            <button onClick={() => { alert(t('common.password_changed')); onClose(); }} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium">{t('common.update_password')}</button>
+
+            {activeTab === 'password' && (
+                <div className="space-y-4">
+                    <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.current_password')}</label>
+                    <input type="password" value={currentPass} onChange={e => setCurrentPass(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.new_password')}</label>
+                    <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.confirm_password')}</label>
+                    <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    {passError && <div className="text-red-500 text-sm">{passError}</div>}
+                    <div className="flex justify-end gap-3 mt-6">
+                    <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+                    <button onClick={handlePasswordSubmit} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium">{t('common.update_password')}</button>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'basic' && (
+                <div className="space-y-4">
+                    {userInfo ? (
+                        <>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.id')}</label>
+                            <input type="text" value={userInfo.id} disabled className="w-full border border-slate-200 bg-slate-50 rounded-lg px-4 py-2 text-slate-500" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.name')}</label>
+                            <input type="text" value={userInfo.name} onChange={e => setUserInfo({...userInfo, name: e.target.value})} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.unit')}</label>
+                                <input type="text" value={userInfo.unit} disabled className="w-full border border-slate-200 bg-slate-50 rounded-lg px-4 py-2 text-slate-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.dept')}</label>
+                                <input type="text" value={userInfo.department} disabled className="w-full border border-slate-200 bg-slate-50 rounded-lg px-4 py-2 text-slate-500" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('user.contact')}</label>
+                            <input type="text" value={userInfo.contact} onChange={e => setUserInfo({...userInfo, contact: e.target.value})} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+                            <button onClick={handleInfoSubmit} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium">{t('common.save_info')}</button>
+                        </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-8 text-slate-500">
+                            User information not available for this role.
+                        </div>
+                    )}
+                </div>
+            )}
             </div>
         </div>
-        </div>
-    </div>
-);
+    );
+};
 
 // Helper Components
 const Unauthorized: React.FC = () => {

@@ -6,8 +6,9 @@ const translations = {
   en: {
     'app.title': 'Aegis CDR System',
     'app.subtitle': 'Deep Content Disarm & Reconstruction',
-    'app.footer': '© 2024 Aegis Security. C++ High Performance Engine.',
+    'app.footer': '© 2025 Pushtime Tech. Aegis CDR System.',
     'app.welcome': 'Welcome,',
+    'app.portal': 'Aegis CDR Portal',
     
     // Login
     'login.title': 'Login as',
@@ -56,6 +57,7 @@ const translations = {
     'user.contact': 'Contact',
     'user.subtitle': 'Manage general user accounts and access.',
     'user.delete_confirm': 'Are you sure you want to delete this user?',
+    'user.update_success': 'User information updated successfully.',
 
     // Dashboard
     'dash.system_dashboard': 'System Dashboard',
@@ -240,6 +242,7 @@ const translations = {
     'file.formats': 'Supported: DOC/XLS/PPT, PDF, JPG/PNG, MP4/AVI',
     'file.recent': 'Recent CDR Tasks',
     'file.search': 'Search tasks...',
+    'file.no_tasks': 'No tasks found.',
     'file.col.task': 'Task ID',
     'file.col.filename': 'Filename',
     'file.col.size': 'Size',
@@ -287,8 +290,12 @@ const translations = {
     'report.col.on': 'Generated On',
     
     // Common
+    'common.account': 'Account',
+    'common.signout': 'Sign Out',
+    'common.basic_info': 'Basic Info',
     'common.change_password': 'Change Password',
     'common.update_password': 'Update Password',
+    'common.save_info': 'Save Information',
     'common.cancel': 'Cancel',
     'common.current_password': 'Current Password',
     'common.new_password': 'New Password',
@@ -302,8 +309,9 @@ const translations = {
   zh: {
     'app.title': 'Aegis CDR 系统',
     'app.subtitle': '深度内容清洗与重构系统',
-    'app.footer': '© 2024 Aegis Security. C++ 高性能引擎.',
+    'app.footer': '© 2025 Pushtime Tech. Aegis CDR System.',
     'app.welcome': '欢迎，',
+    'app.portal': 'Aegis CDR系统门户',
     
     // Login
     'login.title': '登录身份',
@@ -352,6 +360,7 @@ const translations = {
     'user.contact': '联系方式',
     'user.subtitle': '管理一般用户账号和权限。',
     'user.delete_confirm': '确定要删除此用户吗？',
+    'user.update_success': '用户信息更新成功。',
 
     // Dashboard
     'dash.system_dashboard': '系统概览',
@@ -536,6 +545,7 @@ const translations = {
     'file.formats': '支持: Office/PDF, JPG/PNG, MP4/AVI 等',
     'file.recent': '最近清洗任务',
     'file.search': '搜索任务...',
+    'file.no_tasks': '暂时没有任务.',
     'file.col.task': '任务 ID',
     'file.col.filename': '文件名',
     'file.col.size': '大小',
@@ -583,8 +593,12 @@ const translations = {
     'report.col.on': '生成时间',
     
     // Common
+    'common.account': '账户',
+    'common.signout': '退出',
+    'common.basic_info': '基本信息',
     'common.change_password': '修改密码',
     'common.update_password': '更新密码',
+    'common.save_info': '保存信息',
     'common.cancel': '取消',
     'common.current_password': '当前密码',
     'common.new_password': '新密码',

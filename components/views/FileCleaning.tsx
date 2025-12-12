@@ -241,7 +241,7 @@ const FileCleaning: React.FC<FileCleaningProps> = ({ currentUser, role }) => {
                   </tr>
                ))}
                {sortedTasks.length === 0 && (
-                   <tr><td colSpan={7} className="p-8 text-center text-slate-400">No tasks found.</td></tr>
+                   <tr><td colSpan={7} className="p-8 text-center text-slate-400">{t('file.no_tasks')}</td></tr>
                )}
             </tbody>
          </table>

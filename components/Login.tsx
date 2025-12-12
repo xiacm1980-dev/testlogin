@@ -18,12 +18,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const { language, setLanguage, t } = useLanguage();
 
   const handleAdminLogin = () => {
-    if (password === '123456') {
-      if (selectedRole) {
+    if (selectedRole && backend.authenticateAdmin(selectedRole, password)) {
         onLogin(selectedRole);
-      }
     } else {
-      setError(t('login.error'));
+        setError(t('login.error'));
     }
   };
 

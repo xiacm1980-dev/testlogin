@@ -117,6 +117,11 @@ export interface LogConfig {
     autoArchive: boolean;
 }
 
+interface AdminUser {
+    role: Role;
+    password: string;
+}
+
 const STORAGE_KEYS = {
   TASKS: 'aegis_db_tasks',
   THREATS: 'aegis_db_threats',
@@ -128,7 +133,8 @@ const STORAGE_KEYS = {
   BACKUPS: 'aegis_db_backups',
   NET_CONFIG: 'aegis_db_net_config',
   LOG_CONFIG: 'aegis_db_log_config',
-  USERS: 'aegis_db_users' // New key
+  USERS: 'aegis_db_users', // General Users
+  ADMINS: 'aegis_db_admins' // Admin Users
 };
 
 // Singleton Mock Backend Class
@@ -140,6 +146,7 @@ class BackendService {
   private archives: ArchiveFile[] = [];
   private backups: BackupFile[] = [];
   private generalUsers: GeneralUser[] = [];
+  private adminUsers: AdminUser[] = [];
   
   private networkConfig: NetworkConfig = {
       hostname: 'aegis-core-01',
@@ -210,6 +217,7 @@ class BackendService {
     const nc = localStorage.getItem(STORAGE_KEYS.NET_CONFIG);
     const lc = localStorage.getItem(STORAGE_KEYS.LOG_CONFIG);
     const u = localStorage.getItem(STORAGE_KEYS.USERS);
+    const ad = localStorage.getItem(STORAGE_KEYS.ADMINS);
 
     if (t) this.tasks = JSON.parse(t);
     if (th) this.threats = { ...this.threats, ...JSON.parse(th) };
@@ -222,6 +230,7 @@ class BackendService {
     if (nc) this.networkConfig = JSON.parse(nc);
     if (lc) this.logConfig = JSON.parse(lc);
     if (u) this.generalUsers = JSON.parse(u);
+    if (ad) this.adminUsers = JSON.parse(ad);
 
     // Seed defaults
     if (this.tasks.length === 0) {
@@ -245,6 +254,14 @@ class BackendService {
             { id: 'user01', name: 'John Doe', password: 'password', unit: 'Headquarters', department: 'Finance', contact: '555-0101', createdAt: new Date().toISOString() }
         ];
     }
+
+    if (this.adminUsers.length === 0) {
+        this.adminUsers = [
+            { role: Role.SYSADMIN, password: '123456' },
+            { role: Role.SECADMIN, password: '123456' },
+            { role: Role.LOGADMIN, password: '123456' }
+        ];
+    }
     
     this.save();
   }
@@ -262,6 +279,7 @@ class BackendService {
     localStorage.setItem(STORAGE_KEYS.NET_CONFIG, JSON.stringify(this.networkConfig));
     localStorage.setItem(STORAGE_KEYS.LOG_CONFIG, JSON.stringify(this.logConfig));
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.generalUsers));
+    localStorage.setItem(STORAGE_KEYS.ADMINS, JSON.stringify(this.adminUsers));
   }
 
   public log(module: LogEntry['module'], severity: LogEntry['severity'], messageKey: string, params?: Record<string, any>, sourceIp?: string, user?: string) {
@@ -487,7 +505,8 @@ class BackendService {
           policies: this.policies,
           network: this.networkConfig,
           threatConfig: this.threatConfig,
-          users: this.generalUsers
+          users: this.generalUsers,
+          admins: this.adminUsers
       };
       
       const newBackup: BackupFile = {
@@ -515,6 +534,7 @@ class BackendService {
             if (data.network) this.networkConfig = data.network;
             if (data.threatConfig) this.threatConfig = data.threatConfig;
             if (data.users) this.generalUsers = data.users;
+            if (data.admins) this.adminUsers = data.admins;
             this.log('SYSTEM', 'WARN', `System restored from backup ${backup.name}`);
             this.save();
             return true;
@@ -534,6 +554,32 @@ class BackendService {
   public authenticateGeneralUser(id: string, pass: string): GeneralUser | null {
       const user = this.generalUsers.find(u => u.id === id && u.password === pass);
       return user || null;
+  }
+
+  public authenticateAdmin(role: Role, pass: string): boolean {
+      const admin = this.adminUsers.find(a => a.role === role);
+      return admin ? admin.password === pass : false;
+  }
+
+  public changePassword(username: string, role: Role, oldPass: string, newPass: string): boolean {
+      if (role === Role.USER) {
+          const user = this.generalUsers.find(u => u.id === username);
+          if (user && user.password === oldPass) {
+              user.password = newPass;
+              this.log('AUTH', 'INFO', `Password changed for user ${username}`, undefined, undefined, username);
+              this.save();
+              return true;
+          }
+      } else {
+          const admin = this.adminUsers.find(a => a.role === role);
+          if (admin && admin.password === oldPass) {
+              admin.password = newPass;
+              this.log('AUTH', 'WARN', `Password changed for admin ${role}`, undefined, undefined, role);
+              this.save();
+              return true;
+          }
+      }
+      return false;
   }
 
   public getGeneralUsers() { return [...this.generalUsers]; }
